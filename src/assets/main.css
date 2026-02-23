@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background-color: #d1d5de;
+  /* background: linear-gradient(45deg, #c4c39c, #8b7e44, #f2ebd3); */
+  /* background-color: #f4a460; */
+  background-size: 300% 300%; /* Увеличиваем размер для более выраженного эффекта */
+  animation: gradientAnimation 25s ease infinite; /* Замедляем анимацию для плавности */
+  margin: 0;
+  padding: 0;
+}
+
+.dark body {
+  background: linear-gradient(45deg, #1a1c20, #2c3e50, #34495e);
+}
+
+@keyframes gradientAnimation {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+/* Добавьте эти стили для темной темы */
+.dark {
+  @apply text-white;
+}
+
+.dark .bg-white {
+  @apply bg-gray-800;
+}
+
+.dark input,
+.dark select {
+  @apply bg-gray-700 text-white border-gray-600;
+}
+
+.dark button {
+  @apply bg-gray-700 text-white hover:bg-gray-600;
+}

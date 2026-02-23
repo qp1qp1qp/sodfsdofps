@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Запрещаем индексацию служебных страниц
+Disallow: /checkout
+Disallow: /favorites
+
+# Sitemap
+Sitemap: https://www.wooddon.ru/sitemap.xml
