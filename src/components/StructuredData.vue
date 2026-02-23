@@ -40,3 +40,4 @@ onUnmounted(() => {
   }
 })
 </script>
+<template></template>

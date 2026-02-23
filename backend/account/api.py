@@ -14,10 +14,6 @@ API_KEY = settings.API_KEY
 
 @api_view(['POST'])
 def get_api_key(request):
-    if request.data.get('secret') == settings.API_SECRET:
-        return Response({
-            'api_key': settings.API_KEY
-        })
     return Response({
         'error': 'Invalid secret'
     }, status=status.HTTP_401_UNAUTHORIZED)

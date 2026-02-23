@@ -22,8 +22,11 @@ class CharacteristicSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'values']
 
     def get_values(self, obj):
-        characteristic_values = self.context.get('characteristic_values', [])
-        values = characteristic_values.filter(characteristic=obj)
+        characteristic_values = self.context.get('characteristic_values')
+        if characteristic_values is not None:
+            values = characteristic_values.filter(characteristic=obj)
+        else:
+            values = CharacteristicValue.objects.filter(characteristic=obj)
         return CharacteristicValueSerializer(values, many=True).data
 
 class ProductCharacteristicSerializer(serializers.ModelSerializer):

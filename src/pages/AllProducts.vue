@@ -58,7 +58,6 @@ const fetchProductTypes = async () => {
 
 const updateSelectedType = () => {
   selectedType.value = route.params.typeSlug || null
-  fetchItems()
 }
 
 const fetchCharacteristics = async () => {
@@ -223,16 +222,19 @@ watch(favorites, (newFavorites) => {
 }, { deep: true });
 
 onMounted(async () => {
+  selectedType.value = route.params.typeSlug || null
+
   await fetchProductTypes()
-  await fetchCharacteristics()
-  updateSelectedTypeFromRoute()
-  
-  await updateFavorites();
-  await fetchItems();
-  
-  items.value.forEach(item => {
-    item.isFavorite = favorites.value.includes(item.id);
-  });
+  await Promise.all([
+    fetchItems(),
+    fetchCharacteristics()
+  ])
+  await updateFavorites()
+
+  items.value = items.value.map(item => ({
+    ...item,
+    isFavorite: favorites.value.includes(item.id)
+  }))
 })
 
 const onClickAdd = (itemData) => {
@@ -252,18 +254,12 @@ const onChangeSearchInput = debounce((event) => {
   fetchItems()
 }, 300)
 
-const updateSelectedTypeFromRoute = () => {
-  const typeFromRoute = route.query.type
-  if (typeFromRoute) {
-    selectedType.value = typeFromRoute
-  } else {
-    selectedType.value = null
-  }
-}
 
-watch(() => route.params.typeSlug, updateSelectedType)
-
-onMounted(updateSelectedType)
+watch(() => route.params.typeSlug, async (newSlug) => {
+  selectedType.value = newSlug || null
+  lastParams = null
+  await Promise.all([fetchItems(), fetchCharacteristics()])
+})
 
 watch(
   cart,

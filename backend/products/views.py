@@ -31,7 +31,8 @@ class APIKeyMixin:
         super().initial(request, *args, **kwargs)
         api_key = request.headers.get('X-API-Key')
         if api_key != settings.API_KEY:
-            self.permission_denied(request, message="Invalid API key")
+            from rest_framework.exceptions import AuthenticationFailed
+            raise AuthenticationFailed("Invalid API key")
 
 class ProductPagination(PageNumberPagination):
     """Кастомная пагинация"""
@@ -256,9 +257,32 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         except Exception as e:
             logger.error(f"Error logging product detail view: {e}")
 
-class CharacteristicViewSet(APIKeyMixin, viewsets.ModelViewSet):
+class CharacteristicViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Characteristic.objects.all()
     serializer_class = CharacteristicSerializer
+    permission_classes = [AllowAny]
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        product_type_slug = self.request.query_params.get('product_type')
+        
+        qs = CharacteristicValue.objects.select_related('characteristic')
+        if product_type_slug:
+            qs = qs.filter(
+                productcharacteristic__product__product_type__slug=product_type_slug
+            ).distinct()
+        
+        context['characteristic_values'] = qs
+        return context
+    
+    def get_queryset(self):
+        product_type_slug = self.request.query_params.get('product_type')
+        qs = Characteristic.objects.all()
+        if product_type_slug:
+            qs = qs.filter(
+                characteristicvalue__productcharacteristic__product__product_type__slug=product_type_slug
+            ).distinct()
+        return qs
 
 class HeroImageViewSet(APIKeyMixin, viewsets.ModelViewSet):
     queryset = HeroImage.objects.all()
