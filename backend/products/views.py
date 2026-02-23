@@ -265,13 +265,26 @@ class CharacteristicViewSet(viewsets.ReadOnlyModelViewSet):
     def get_serializer_context(self):
         context = super().get_serializer_context()
         product_type_slug = self.request.query_params.get('product_type')
-        
+
         qs = CharacteristicValue.objects.select_related('characteristic')
+
         if product_type_slug:
             qs = qs.filter(
                 productcharacteristic__product__product_type__slug=product_type_slug
-            ).distinct()
-        
+            )
+            qs = qs.annotate(
+                product_count=Count(
+                    'productcharacteristic__product',
+                    filter=Q(productcharacteristic__product__product_type__slug=product_type_slug),
+                    distinct=True
+                )
+            )
+        else:
+            qs = qs.annotate(
+                product_count=Count('productcharacteristic__product', distinct=True)
+            )
+
+        qs = qs.distinct()
         context['characteristic_values'] = qs
         return context
     
@@ -280,7 +293,7 @@ class CharacteristicViewSet(viewsets.ReadOnlyModelViewSet):
         qs = Characteristic.objects.all()
         if product_type_slug:
             qs = qs.filter(
-                characteristicvalue__productcharacteristic__product__product_type__slug=product_type_slug
+                values__productcharacteristic__product__product_type__slug=product_type_slug
             ).distinct()
         return qs
 

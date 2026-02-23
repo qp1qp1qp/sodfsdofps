@@ -441,7 +441,7 @@ const galleryImages = ref([
               <input
                 @input="onChangeSearchInput"
                 class="border rounded-md py-2 pl-11 pr-4 outline-none focus:border-gray-400 w-full"
-                placeholder="Search..."
+                placeholder="Поиск..."
               />
             </div>
           </div>
