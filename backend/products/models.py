@@ -401,6 +401,12 @@ class Order(models.Model):
             return "Ошибка отображения товаров"
     formatted_items.short_description = "Товары"
 
+    def save(self, *args, **kwargs):
+        if not self.order_number:
+            import uuid
+            self.order_number = f"{uuid.uuid4().hex[:8].upper()}"
+        super().save(*args, **kwargs)
+    
     def __str__(self):
         return f"Заказ {self.id} от {self.created_at.strftime('%d.%m.%Y %H:%M')}"
 

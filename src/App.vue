@@ -217,8 +217,6 @@ provide('cart', {
         { dark: isDarkMode }
       ]"
     >
-      <StructuredData />
-      <SkipToContent />
       <!-- Добавляем класс fixed-header для хедера на маленьких экранах -->
       <div class="fixed-header w-full z-10">
         <Header

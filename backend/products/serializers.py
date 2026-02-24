@@ -181,7 +181,26 @@ class OrderSerializer(serializers.ModelSerializer):
         fields = ['id', 'customer_type', 'first_name', 'last_name', 'phone', 
                  'email', 'comment', 'delivery_method', 'items', 'order_items',
                  'order_number', 'total_price', 'created_at', 'status']
-        read_only_fields = ['created_at', 'order_items']
+        read_only_fields = ['created_at', 'order_items', 'order_number']
+
+    def validate_phone(self, value):
+        import re
+        if value:
+            cleaned = re.sub(r'[\s\-\(\)]', '', value)
+            if not re.match(r'^\+?[1-9]\d{6,14}$', cleaned):
+                raise serializers.ValidationError('Неверный формат телефона')
+        return value
+
+    def validate_first_name(self, value):
+        if value and len(value.strip()) < 2:
+            raise serializers.ValidationError('Имя слишком короткое')
+        return value.strip() if value else value
+
+    def validate_comment(self, value):
+        # Ограничиваем длину комментария
+        if value and len(value) > 1000:
+            raise serializers.ValidationError('Комментарий не должен превышать 1000 символов')
+        return value
 
     def create(self, validated_data):
         # Извлекаем items из validated_data

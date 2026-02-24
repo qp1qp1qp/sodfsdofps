@@ -60,7 +60,7 @@ class UserActivityMiddleware(MiddlewareMixin):
             
             # Добавляем данные запроса для определенных действий
             extra_data = {}
-            if action_type in ['add_to_cart', 'toggle_favorite', 'create_order']:
+            if action_type in ['add_to_cart', 'toggle_favorite']:
                 extra_data['request_data'] = self._safe_get_request_data(request)
             
             # Логируем в файл

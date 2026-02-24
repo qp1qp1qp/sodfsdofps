@@ -10,13 +10,15 @@ logger = logging.getLogger(__name__)
 
 
 def get_client_ip(request):
-    """Получает реальный IP клиента"""
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-    if x_forwarded_for:
-        ip = x_forwarded_for.split(',')[0].strip()
-    else:
-        ip = request.META.get('REMOTE_ADDR')
-    return ip
+    trusted_proxies = getattr(settings, 'TRUSTED_PROXY_IPS', [])
+    remote_addr = request.META.get('REMOTE_ADDR')
+    
+    if trusted_proxies and remote_addr in trusted_proxies:
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            return x_forwarded_for.split(',')[0].strip()
+    
+    return remote_addr
 
 
 def get_location_from_ip(ip):

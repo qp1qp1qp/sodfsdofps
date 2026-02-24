@@ -100,10 +100,7 @@ const showPopup = ref(false)
 const handleCreateOrder = async () => {
   if (!isFormValid.value) return
 
-  orderNumber.value = generateOrderNumber()
-
   const orderData = {
-    order_number: orderNumber.value,
     customer_type: customerType.value,
     first_name: firstName.value,
     last_name: lastName.value,

@@ -3,7 +3,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes, action
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAdminUser
 from rest_framework.pagination import PageNumberPagination
 from django.conf import settings
 from .models import Product, Characteristic, CharacteristicValue, HeroImage, GalleryImage, Order, Page, Favorite, ProductType, ProductCharacteristic
@@ -297,21 +297,33 @@ class CharacteristicViewSet(viewsets.ReadOnlyModelViewSet):
             ).distinct()
         return qs
 
-class HeroImageViewSet(APIKeyMixin, viewsets.ModelViewSet):
+class HeroImageViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = HeroImage.objects.all()
     serializer_class = HeroImageSerializer
+    permission_classes = [AllowAny]
 
-class GalleryImageViewSet(APIKeyMixin, viewsets.ModelViewSet):
+class GalleryImageViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = GalleryImage.objects.all()
     serializer_class = GalleryImageSerializer
+    permission_classes = [AllowAny]
 
-class OrderViewSet(APIKeyMixin, viewsets.ModelViewSet):
-    queryset = Order.objects.all()
+class OrderViewSet(viewsets.ModelViewSet):
     serializer_class = OrderSerializer
 
-class PageViewSet(APIKeyMixin, viewsets.ModelViewSet):
+    def get_permissions(self):
+        if self.action == 'create':
+            return [AllowAny()]
+        return [IsAdminUser()]
+
+    def get_queryset(self):
+        if self.request.user.is_staff:
+            return Order.objects.all()
+        return Order.objects.none()
+
+class PageViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Page.objects.all()
     serializer_class = PageSerializer
+    permission_classes = [AllowAny]
 
 class FavoriteViewSet(viewsets.ViewSet):
     permission_classes = [AllowAny]
@@ -508,8 +520,10 @@ def create_order(request):
 def subscribe_newsletter(request):
     serializer = NewsletterSubscriberSerializer(data=request.data)
     if serializer.is_valid():
+        email = serializer.validated_data.get('email')
+        if NewsletterSubscriber.objects.filter(email=email).exists():
+            return Response({"message": "Вы уже подписаны!"}, status=status.HTTP_200_OK)
         serializer.save()
-        return Response({"message": "Вы успешно подписались на рассылку!"}, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
@@ -529,6 +543,8 @@ def receive_analytics_events(request):
         events = request.data.get('events', [])
         if not events:
             return Response({"error": "No events provided"}, status=status.HTTP_400_BAD_REQUEST)
+        if len(events) > 50:
+            return Response({"error": "Too many events"}, status=status.HTTP_400_BAD_REQUEST)
         
         ip_address = get_client_ip(request)
         location = get_location_from_ip(ip_address)
