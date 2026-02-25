@@ -5,6 +5,8 @@ import api from '../api'
 
 const productTypes = ref([])
 const email = ref('')
+const message = ref('')
+const messageType = ref('')
 
 onMounted(async () => {
   await fetchProductTypes()
@@ -22,11 +24,16 @@ const fetchProductTypes = async () => {
 const subscribeNewsletter = async () => {
   try {
     const response = await api.post('/newsletter/subscribe/', { email: email.value })
-    alert('Вы успешно подписались на рассылку!')
+    message.value = response.data.message || 'Вы успешно подписались!'
+    messageType.value = 'success'
     email.value = ''
   } catch (error) {
-    console.error('Ошибка при подписке на рассылку:', error)
-    alert('Произошла ошибка при подписке. Пожалуйста, попробуйте позже.')
+    if (error.response?.status === 400) {
+      message.value = 'Введите корректный email.'
+    } else {
+      message.value = 'Ошибка при подписке. Попробуйте позже.'
+    }
+    messageType.value = 'error'
   }
 }
 </script>
@@ -137,11 +144,14 @@ const subscribeNewsletter = async () => {
             >
               Подписаться
             </button>
+            <p v-if="message" :class="messageType === 'success' ? 'text-green-400' : 'text-red-400'" class="text-sm mt-1">
+              {{ message }}
+            </p>
           </form>
         </div>
       </div>
       <div class="mt-8 pt-8 border-t border-gray-700 text-center">
-        <p class="text-gray-400">&copy; 2024 WoodDon. Все права защищены.</p>
+        <p class="text-gray-400">&copy; 2026 WoodDon. Все права защищены.</p>
       </div>
     </div>
   </footer>

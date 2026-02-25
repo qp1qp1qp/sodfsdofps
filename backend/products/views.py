@@ -518,13 +518,18 @@ def create_order(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def subscribe_newsletter(request):
-    serializer = NewsletterSubscriberSerializer(data=request.data)
-    if serializer.is_valid():
-        email = serializer.validated_data.get('email')
-        if NewsletterSubscriber.objects.filter(email=email).exists():
-            return Response({"message": "Вы уже подписаны!"}, status=status.HTTP_200_OK)
-        serializer.save()
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        serializer = NewsletterSubscriberSerializer(data=request.data)
+        if serializer.is_valid():
+            email = serializer.validated_data.get('email')
+            if NewsletterSubscriber.objects.filter(email=email).exists():
+                return Response({"message": "Вы уже подписаны!"}, status=status.HTTP_200_OK)
+            serializer.save()
+            return Response({"message": "Вы успешно подписались!"}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        logger.error(f"Ошибка подписки на рассылку: {e}", exc_info=True)
+        return Response({"error": "Внутренняя ошибка сервера"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
