@@ -54,6 +54,7 @@ app.use(autoAnimatePlugin)
 // Добавляем класс переходного состояния страницы
 router.beforeEach((to, from, next) => {
   document.body.classList.add('page-transitioning');
+  document.dispatchEvent(new Event('page-transition-start'))
   next();
 });
 
@@ -61,7 +62,8 @@ router.beforeEach((to, from, next) => {
 router.afterEach(() => {
   setTimeout(() => {
     document.body.classList.remove('page-transitioning');
-  }, 300);
+    document.dispatchEvent(new Event('page-transition-end'))
+  }, 350);
 });
 
 app.mount('#app')

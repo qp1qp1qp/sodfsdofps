@@ -18,7 +18,27 @@ export default {
     const visibleItems = ref([])
     const sliderRef = ref(null)
     const sliderInstance = ref(null)
-    
+    const isTransitioning = ref(false)
+
+    const saveSliderDimensions = () => {
+      if (!sliderRef.value) return
+      
+      const sliderWidth = sliderRef.value.offsetWidth
+      if (sliderWidth === 0) return // не сохраняем если слайдер скрыт
+      
+      sliderRef.value.style.setProperty('--slider-width', sliderWidth + 'px')
+      
+      const slides = sliderRef.value.querySelectorAll('.keen-slider__slide')
+      slides.forEach(slide => {
+        const w = slide.offsetWidth
+        if (w > 0) {
+          slide.style.setProperty('--slide-width', w + 'px')
+        }
+      })
+      
+      console.log('Saved slider dimensions:', sliderWidth, 'slide width:', slides[0]?.offsetWidth)
+    }
+
     // Получаем доступ к массиву избранного и корзине
     const { cart, favorites, updateFavorites } = inject('cart')
     
@@ -105,6 +125,7 @@ export default {
           loop: true,
           mode: 'free-snap',
           slides: { perView: 'auto', spacing: 10 },
+          renderMode: 'performance',
           breakpoints: {
             '(min-width: 320px)': { slides: { perView: 1, spacing: 10 } },
             '(min-width: 480px)': { slides: { perView: 2, spacing: 10 } },
@@ -112,9 +133,20 @@ export default {
             '(min-width: 1024px)': { slides: { perView: 4, spacing: 10 } },
             '(min-width: 1280px)': { slides: { perView: 5, spacing: 10 } }
           },
-          created() {
+          created(s) {
             isLoading.value = false
-          }
+            // Ждём пока keen-slider расставит слайды
+            setTimeout(() => {
+              saveSliderDimensions()
+            }, 100)
+          },
+          updated(s) {
+            if (!isTransitioning.value) {
+              setTimeout(() => {
+                saveSliderDimensions()
+              }, 50)
+            }
+}
         })
         
         let timeout
@@ -155,6 +187,7 @@ export default {
       async () => {
         await updateVisibleItems()
         nextTick(() => {
+          console.log('Slider width:', sliderRef.value?.offsetWidth)
           initializeSlider()
         })
       },
@@ -188,15 +221,26 @@ export default {
       });
     }, { deep: true });
 
+    
     onMounted(() => {
-      // При монтировании компонента загружаем и синхронизируем данные
+      // Слушаем начало и конец route transition
+      const onTransitionStart = () => { isTransitioning.value = true }
+      const onTransitionEnd = () => { isTransitioning.value = false }
+      
+      document.addEventListener('page-transition-start', onTransitionStart)
+      document.addEventListener('page-transition-end', onTransitionEnd)
+
       updateVisibleItems().then(() => {
-        // После загрузки данных, проверяем статусы избранного
         updateFavoritesStatus();
-        
         nextTick(() => {
           initializeSlider()
         })
+      })
+
+      // Сохраняем для cleanup
+      onBeforeUnmount(() => {
+        document.removeEventListener('page-transition-start', onTransitionStart)
+        document.removeEventListener('page-transition-end', onTransitionEnd)
       })
     })
 
@@ -240,7 +284,8 @@ export default {
     <div v-if="!isLoading && visibleItems.length > 0">
       <div
         ref="sliderRef"
-        class="keen-slider featured-products-slider"
+        class="keen-slider featured-products-slider" 
+        style="transition: opacity 0.3s ease;"
         role="region"
         aria-label="Свежая поставка пиломатериалов"
       >
@@ -429,5 +474,10 @@ export default {
 .keen-slider__slide {
   min-width: 0;
   overflow: hidden;
+}
+
+.opacity-0 {
+  opacity: 0;
+  pointer-events: none;
 }
 </style>

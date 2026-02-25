@@ -231,7 +231,7 @@ provide('cart', {
       <!-- Добавляем отступ для контента, равный высоте хедера -->
       <div class="header-spacer"></div>
 
-      <main id="main-content" class="flex-grow overflow-y-auto">
+      <main id="main-content" class="flex-grow overflow-y-scroll">
         <router-view v-slot="{ Component }">
           <transition name="fade" mode="out-in">
             <component :is="Component" />
@@ -263,7 +263,7 @@ provide('cart', {
           @toggle-dark-mode="toggleDarkMode"
         />
 
-        <main id="main-content" class="flex-grow overflow-y-auto">
+        <main id="main-content" class="flex-grow overflow-y-scroll">
           <router-view v-slot="{ Component }">
             <transition name="fade" mode="out-in">
               <component :is="Component" />

@@ -21,6 +21,18 @@ const burgerMenu = ref(null)
 
 const router = useRouter()
 
+const handleLogoClick = () => {
+  updateFavorites()
+  // Если уже на главной — просто скроллим наверх
+  if (router.currentRoute.value.path === '/') {
+    const mainContent = document.getElementById('main-content')
+    if (mainContent) {
+      mainContent.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+}
+
 const toggleMenu = () => {
   isMenuOpen.value = !isMenuOpen.value
   if (isMenuOpen.value) {
@@ -156,7 +168,7 @@ onMounted(() => {
   <header class="py-4 px-4 absolute top-0 left-0 right-0 z-50 pointer-events-none">
     <div class="flex items-center justify-between gap-4">
       <div class="p-2 rounded-lg h-16 flex items-center flex-shrink-0 pointer-events-auto">
-        <router-link to="/" @click="updateFavorites" class="logo-link">
+        <router-link to="/" @click="handleLogoClick" class="logo-link">
           <img :src="logoSrc" alt="Wooddon Logo" class="logo h-12 w-auto object-contain" />
         </router-link>
       </div>
