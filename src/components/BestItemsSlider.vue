@@ -425,4 +425,9 @@ export default {
 :deep(img) {
   -webkit-user-drag: none;
 }
+
+.keen-slider__slide {
+  min-width: 0;
+  overflow: hidden;
+}
 </style>

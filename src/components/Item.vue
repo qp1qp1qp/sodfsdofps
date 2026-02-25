@@ -194,7 +194,7 @@ const getSecondaryPriceDisplay = () => {
     <div v-if="is_featured" class="featured-label">Новинка</div>
 
     <div class="product-image-container">
-      <img :src="fullImageUrl" alt="Product" class="product-image" />
+      <img :src="fullImageUrl" loading="lazy" alt="Product" class="product-image" />
     </div>
     <div class="product-info">
       <h3 class="product-title">{{ title }}</h3>

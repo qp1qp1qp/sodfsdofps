@@ -40,8 +40,8 @@ class ProductPagination(PageNumberPagination):
     page_size_query_param = 'page_size'
     max_page_size = 100
 
-class ProductTypeViewSet(viewsets.ModelViewSet):
-    queryset = ProductType.objects.all()
+class ProductTypeViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = ProductType.objects.all().order_by('name')
     serializer_class = ProductTypeSerializer
     permission_classes = [AllowAny]
     lookup_field = 'slug'

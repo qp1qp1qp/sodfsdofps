@@ -528,3 +528,17 @@ class ErrorLog(models.Model):
     
     def __str__(self):
         return f"{self.level} - {self.timestamp.strftime('%Y-%m-%d %H:%M:%S')}"
+
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
+from django.core.cache import cache
+
+@receiver([post_save, post_delete], sender=Product)
+def invalidate_product_cache(sender, **kwargs):
+    cache.delete_many(cache.keys('products_list:*') if hasattr(cache, 'keys') else [])
+    # Для LocMemCache используем паттерн
+    try:
+        cache.delete_pattern('products_list:*')
+    except AttributeError:
+        # LocMemCache не поддерживает паттерны — очищаем весь кэш
+        cache.clear()

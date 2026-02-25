@@ -41,7 +41,7 @@ const router = createRouter({
 
     return new Promise((resolve) => {
       setTimeout(() => {
-        resolve({ top: 0, behavior: 'auto'});
+        resolve({ top: 0, behavior: 'auto' });
       }, 350);
     });
   }

@@ -133,71 +133,6 @@ const addToFavorite = async (item) => {
   }
 }
 
-// Функция для получения товаров для слайдера (товары по акции)
-const fetchSliderItems = async (favoritesData) => {
-  try {
-    console.log('Fetching slider items (featured products)');
-    const params = { is_featured: true }
-    const itemsResponse = await getProducts(params)
-
-    const itemsData = Array.isArray(itemsResponse.data) ? itemsResponse.data : itemsResponse.data.results || []
-
-    sliderItems.value = itemsData.map((obj) => {
-      // Check if item is in cart
-      const isInCart = cart.value.some((cartItem) => cartItem.id === obj.id);
-      
-      return {
-        ...obj,
-        isFavorite: favoritesData.some((fav) => fav.product.id === obj.id),
-        isAdded: isInCart,
-        // If the item is in cart, use the cart quantity
-        quantity: isInCart 
-          ? cart.value.find(cartItem => cartItem.id === obj.id).quantity
-          : obj.quantity
-      };
-    });
-    
-    console.log('Processed slider items:', sliderItems.value.length);
-  } catch (err) {
-    console.error('Ошибка при загрузке товаров для слайдера:', err)
-  }
-}
-
-// Функция для получения товаров для галереи (с применением фильтров)
-const fetchGalleryItems = async (favoritesData) => {
-  try {
-    isLoading.value = true;
-    const params = {
-      sortBy: filters.sortBy,
-      title: filters.searchQuery
-    }
-    console.log('Fetching gallery items with params:', params)
-    const itemsResponse = await getProducts(params)
-
-    const itemsData = Array.isArray(itemsResponse.data) ? itemsResponse.data : itemsResponse.data.results || []
-
-    galleryItems.value = itemsData.map((obj) => {
-      // Check if item is in cart
-      const isInCart = cart.value.some((cartItem) => cartItem.id === obj.id);
-      
-      return {
-        ...obj,
-        isFavorite: favoritesData.some((fav) => fav.product.id === obj.id),
-        isAdded: isInCart,
-        // If the item is in cart, use the cart quantity
-        quantity: isInCart 
-          ? cart.value.find(cartItem => cartItem.id === obj.id).quantity
-          : obj.quantity
-      };
-    });
-    
-    console.log('Processed gallery items:', galleryItems.value.length);
-    isLoading.value = false;
-  } catch (err) {
-    console.error('Ошибка при загрузке данных для галереи:', err)
-    isLoading.value = false;
-  }
-}
 
 const updateFavoriteStatus = async () => {
   try {
@@ -234,10 +169,33 @@ onMounted(async () => {
   const favoritesData = currentFavorites.map(id => ({ product: { id } }));
 
   // Загружаем товары, передавая им общий список избранного
-  await Promise.all([
-    fetchSliderItems(favoritesData),
-    fetchGalleryItems(favoritesData)
-  ]);
+  isLoading.value = true
+  try {
+    const [sliderResponse, galleryResponse] = await Promise.all([
+      getProducts({ is_featured: true }),
+      getProducts({ sortBy: filters.sortBy, title: filters.searchQuery })
+    ])
+
+    const toItem = (obj) => {
+      const isInCart = cart.value.some(c => c.id === obj.id)
+      return {
+        ...obj,
+        price_per_unit: Number(obj.price_per_unit),
+        price_per_cubic_meter: Number(obj.price_per_cubic_meter),
+        quantity: Number(obj.quantity) || 0,
+        isFavorite: favoritesData.some(fav => fav.product.id === obj.id),
+        isAdded: isInCart
+      }
+    }
+
+    const sliderData = Array.isArray(sliderResponse.data) ? sliderResponse.data : sliderResponse.data.results || []
+    const galleryData = Array.isArray(galleryResponse.data) ? galleryResponse.data : galleryResponse.data.results || []
+
+    sliderItems.value = sliderData.map(toItem)
+    galleryItems.value = galleryData.map(toItem)
+  } finally {
+    isLoading.value = false
+  }
 
   window.addEventListener('resize', () => {
     isMobile.value = window.innerWidth < 768
@@ -275,7 +233,29 @@ onUnmounted(() => {
 })
 
 // Слежение за изменениями фильтров только для обновления галереи
-watch(filters, fetchGalleryItems)
+watch(filters, async () => {
+  try {
+    isLoading.value = true
+    const response = await getProducts({ sortBy: filters.sortBy, title: filters.searchQuery })
+    const data = Array.isArray(response.data) ? response.data : response.data.results || []
+    const currentFavIds = favorites.value
+    galleryItems.value = data.map(obj => {
+      const isInCart = cart.value.some(c => c.id === obj.id)
+      return {
+        ...obj,
+        price_per_unit: Number(obj.price_per_unit),
+        price_per_cubic_meter: Number(obj.price_per_cubic_meter),
+        quantity: Number(obj.quantity) || 0,
+        isFavorite: currentFavIds.includes(obj.id),
+        isAdded: isInCart
+      }
+    })
+  } catch (err) {
+    console.error('Ошибка при обновлении галереи:', err)
+  } finally {
+    isLoading.value = false
+  }
+})
 
 // Обновляем статус "isAdded" при изменении корзины
 watch(

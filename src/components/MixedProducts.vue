@@ -287,7 +287,7 @@ watch(favorites, () => {
       <template v-for="(item, index) in items" :key="index">
         <div v-if="item.type === 'image'" :class="['gallery-item', `size-${item.size}`]">
           <div class="image-container">
-            <img :src="item.src" :alt="`Gallery image ${index}`" class="gallery-image" />
+            <img :src="item.src" :alt="`Gallery image ${index}`" class="gallery-image" loading="lazy" />
           </div>
         </div>
         <div v-else-if="item.type === 'product'" class="gallery-item size-product">

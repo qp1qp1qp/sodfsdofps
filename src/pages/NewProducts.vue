@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, inject, watch } from 'vue'
 import { getProducts, addFavorite, removeFavorite, getFavorites } from '../api'
+import { useFavoriteSync } from '../composables/useFavoriteSync'
 import Footer from '../components/Footer.vue'
 import ItemList from '../components/ItemList.vue'
 import { useHead } from '@vueuse/head'
@@ -64,29 +65,7 @@ watch(cart, () => {
   });
 }, { deep: true });
 
-// Добавляем наблюдение за глобальным состоянием избранного
-watch(favorites, (newFavorites) => {
-  console.log('NewProducts: Обновление UI в соответствии с избранным');
-  
-  // Создаем временную копию элементов для работы
-  const updatedItems = [...featuredItems.value];
-  let hasChanges = false;
-  
-  // Проходим по всем товарам и обновляем их статус
-  updatedItems.forEach(item => {
-    const shouldBeFavorite = newFavorites.includes(item.id);
-    if (item.isFavorite !== shouldBeFavorite) {
-      item.isFavorite = shouldBeFavorite;
-      hasChanges = true;
-      console.log(`NewProducts: Обновлен статус избранного для ${item.id} на ${shouldBeFavorite}`);
-    }
-  });
-  
-  // Если были изменения, обновляем весь массив для реактивности
-  if (hasChanges) {
-    featuredItems.value = updatedItems;
-  }
-}, { deep: true });
+useFavoriteSync(featuredItems, favorites)
 
 const getFullImageUrl = (imageUrl) => {
   if (imageUrl && !imageUrl.startsWith('http')) {

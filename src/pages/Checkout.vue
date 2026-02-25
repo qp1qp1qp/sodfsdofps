@@ -96,9 +96,11 @@ const isFormValid = computed(() => {
 })
 
 const showPopup = ref(false)
+const isSubmitting = ref(false)
 
 const handleCreateOrder = async () => {
-  if (!isFormValid.value) return
+  if (!isFormValid.value || isSubmitting.value) return
+  isSubmitting.value = true
 
   const orderData = {
     customer_type: customerType.value,
@@ -125,6 +127,8 @@ const handleCreateOrder = async () => {
     showPopup.value = true
   } catch (error) {
     console.error('Ошибка при оформлении заказа:', error.response?.data || error.message)
+  } finally {
+    isSubmitting.value = false
   }
 }
 
@@ -324,7 +328,8 @@ const getFullImageUrl = (imageUrl) => {
             </div>
             <button
               @click="handleCreateOrder"
-              :disabled="!isFormValid"
+              :disabled="!isFormValid || isSubmitting"
+              :class="isSubmitting ? 'opacity-50 cursor-not-allowed' : ''"
               class="w-full mt-6 bg-indigo-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
               Оформить заказ

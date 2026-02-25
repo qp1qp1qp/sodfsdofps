@@ -3,11 +3,10 @@ import { ref, onMounted, inject, watch } from 'vue'
 import {
   getProducts,
   getFavorites,
-  addFavorite,
-  removeFavorite,
   getProductTypes,
   getCharacteristics
 } from '../api'
+import { useFavoriteSync } from '../composables/useFavoriteSync'
 import ItemList from '../components/ItemList.vue'
 import Footer from '../components/Footer.vue'
 import debounce from 'lodash.debounce'
@@ -112,37 +111,13 @@ const fetchItems = async () => {
       isAdded: cart.value.some((cartItem) => cartItem.id === obj.id)
     }))
 
-    updateFilters()
     await fetchCharacteristics()
   } catch (err) {
     console.error('Ошибка при загрузке данных:', err)
   }
 }
 
-const updateFilters = () => {
-  const newFilters = {}
-  items.value.forEach((item) => {
-    item.characteristics.forEach((char) => {
-      if (!newFilters[char.name]) {
-        newFilters[char.name] = new Set()
-      }
-      newFilters[char.name].add(char.value)
-    })
-  })
 
-  // Преобразуем Set в массив и удаляем фильтры с одним значением
-  Object.keys(newFilters).forEach((key) => {
-    newFilters[key] = Array.from(newFilters[key])
-    if (newFilters[key].length <= 1) {
-      delete newFilters[key]
-    }
-  })
-
-  filters.value = {
-    ...filters.value,
-    ...newFilters
-  }
-}
 
 const selectType = (typeSlug) => {
   if (selectedType.value !== typeSlug) {
@@ -198,28 +173,7 @@ const addToFavorite = async (item) => {
   }
 }
 
-watch(favorites, (newFavorites) => {
-  console.log('AllProducts: Обновление UI в соответствии с избранным');
-  
-  // Создаем временную копию элементов для работы
-  const updatedItems = [...items.value];
-  let hasChanges = false;
-  
-  // Обновляем все товары
-  updatedItems.forEach(item => {
-    const shouldBeFavorite = newFavorites.includes(item.id);
-    if (item.isFavorite !== shouldBeFavorite) {
-      item.isFavorite = shouldBeFavorite;
-      hasChanges = true;
-      console.log(`AllProducts: Обновлен статус избранного для ${item.id} на ${shouldBeFavorite}`);
-    }
-  });
-  
-  // Если были изменения, обновляем весь массив для реактивности
-  if (hasChanges) {
-    items.value = updatedItems;
-  }
-}, { deep: true });
+useFavoriteSync(items, favorites)
 
 onMounted(async () => {
   selectedType.value = route.params.typeSlug || null
