@@ -303,10 +303,9 @@ class UserActivityLogAdmin(admin.ModelAdmin):
         else:
             color = 'red'
         
-        return format_html(
-            '<span style="color: {};">{:.3f}s</span>',
-            color, obj.duration
-        )
+        # Форматируем число до передачи в format_html
+        duration_str = f'{obj.duration:.3f}s'
+        return format_html('<span style="color: {};">{}</span>', color, duration_str)
     duration_display.short_description = 'Время выполнения'
     
     def extra_data_display(self, obj):

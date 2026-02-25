@@ -5,6 +5,7 @@ import logging
 import traceback
 from .models import UserActivityLog, ErrorLog
 from django.utils import timezone
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
