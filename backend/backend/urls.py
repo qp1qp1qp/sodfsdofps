@@ -20,14 +20,9 @@ router.register(r'pages', PageViewSet, basename='page')
 router.register(r'favorites', FavoriteViewSet, basename='favorite')
 
 
-
-
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
-    # path('api/hero-images/', product_views.get_hero_images, name='get_hero_images'),
-    # path('api/gallery-images/', product_views.get_gallery_images, name='get_gallery_images'),
-    # path('api/orders/', product_views.create_order, name='create_order'),
     path('api/newsletter/subscribe/', subscribe_newsletter, name='subscribe_newsletter'),
     path('api/analytics/events/', receive_analytics_events, name='receive_analytics_events'),
     path('admin/api/characteristic-values/', get_characteristic_values, name='admin-characteristic-values'),

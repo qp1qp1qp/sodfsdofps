@@ -26,13 +26,7 @@ from django.views.decorators.cache import cache_page
 
 logger = logging.getLogger('products')
 activity_logger = logging.getLogger('user_activity')
-class APIKeyMixin:
-    def initial(self, request, *args, **kwargs):
-        super().initial(request, *args, **kwargs)
-        api_key = request.headers.get('X-API-Key')
-        if api_key != settings.API_KEY:
-            from rest_framework.exceptions import AuthenticationFailed
-            raise AuthenticationFailed("Invalid API key")
+
 
 class ProductPagination(PageNumberPagination):
     """Кастомная пагинация"""
@@ -422,98 +416,6 @@ class FavoriteViewSet(viewsets.ViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-@api_view(['GET'])
-@permission_classes([AllowAny])
-def get_hero_images(request):
-    api_key = request.headers.get('X-API-Key')
-    if api_key != settings.API_KEY:
-        return Response({"error": "Invalid API key"}, status=status.HTTP_401_UNAUTHORIZED)
-    
-    hero_images = HeroImage.objects.all()
-    serializer = HeroImageSerializer(hero_images, many=True)
-    return Response(serializer.data)
-
-@api_view(['GET'])
-@permission_classes([AllowAny])
-def get_gallery_images(request):
-    api_key = request.headers.get('X-API-Key')
-    if api_key != settings.API_KEY:
-        return Response({"error": "Invalid API key"}, status=status.HTTP_401_UNAUTHORIZED)
-    
-    gallery_images = GalleryImage.objects.all()
-    serializer = GalleryImageSerializer(gallery_images, many=True)
-    return Response(serializer.data)
-
-@api_view(['POST'])
-@permission_classes([AllowAny])
-def create_order(request):
-    try:
-        api_key = request.headers.get('X-API-Key')
-        if api_key != settings.API_KEY:
-            return Response({"error": "Invalid API key"}, status=status.HTTP_401_UNAUTHORIZED)
-        
-        # Копируем данные для обработки
-        order_data = request.data.copy()
-        
-        # Обработка items
-        if 'items' in order_data:
-            try:
-                items = order_data['items']
-                # Если получили строку, пытаемся распарсить JSON
-                if isinstance(items, str):
-                    items = json.loads(items)
-                
-                # Валидация каждого элемента
-                valid_items = []
-                for item in items:
-                    try:
-                        # Минимальные проверки
-                        cleaned_item = {
-                            'product_id': item.get('product_id', 0),
-                            'title': str(item.get('title', '')).strip() or "Неизвестный товар",
-                            'quantity': max(1, int(item.get('quantity', 1))),
-                            'price': max(Decimal('0'), Decimal(str(item.get('price', '0')).replace(',', '.')))
-                        }
-                        valid_items.append(cleaned_item)
-                    except Exception as e:
-                        logger.error(f"Ошибка при обработке item: {e}, item={item}")
-                        # Добавляем дефолтный item если был какой-то критический сбой
-                        if 'title' in item:
-                            valid_items.append({
-                                'product_id': 0,
-                                'title': str(item.get('title', '')).strip() or "Неизвестный товар",
-                                'quantity': 1,
-                                'price': Decimal('0')
-                            })
-                
-                order_data['items'] = valid_items
-            except json.JSONDecodeError:
-                logger.error(f"Ошибка декодирования JSON: {order_data['items']}")
-                order_data['items'] = []
-            except Exception as e:
-                logger.error(f"Необработанная ошибка при обработке items: {e}")
-                order_data['items'] = []
-        
-        # Обработка других полей
-        string_fields = ['first_name', 'last_name', 'phone', 'email', 'comment', 'delivery_method']
-        for field in string_fields:
-            if field in order_data and order_data[field]:
-                order_data[field] = str(order_data[field]).strip()
-        
-        serializer = OrderSerializer(data=order_data)
-        if serializer.is_valid():
-            order = serializer.save()
-            return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
-        
-        logger.error(f"Ошибки валидации: {serializer.errors}")
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    except Exception as e:
-        logger.error(f"Необработанная ошибка: {e}")
-        return Response(
-            {"error": "Внутренняя ошибка сервера"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
