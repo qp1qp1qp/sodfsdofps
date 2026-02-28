@@ -32,38 +32,26 @@ deploy_test:
     - mkdir -p ~/.ssh && chmod 700 ~/.ssh
     - ssh-keyscan -H $SERVER_IP >> ~/.ssh/known_hosts
   script:
-    # 1. Деплоим собранный фронт
+    # 1. Деплоим фронт
     - rsync -az --delete dist/ root@$SERVER_IP:/var/www/wooddon.ru/data/www/test.wooddon.ru/dist/
 
-    # 2. ДЕПЛОИМ БЭКЕНД (Этого не было в твоем файле!)
-    # ВАЖНО: Мы исключаем из копирования .env, venv и медиафайлы, чтобы не затереть то, что уже работает на сервере.
+    # 2. Деплоим бэкенд
     - rsync -az --delete --exclude 'venv' --exclude '.env' --exclude '__pycache__' --exclude '*.sqlite3' --exclude 'media' backend/ root@$SERVER_IP:/var/www/wooddon.ru/data/www/test.wooddon.ru/backend/
 
-    # 3. Заходим на сервер и выполняем команды обновления
+    # 3. Выполняем команды на сервере (Исправлен синтаксис для YAML)
     - |
-      ssh root@$SERVER_IP bash << 'ENDSSH'
+      ssh root@$SERVER_IP '
         set -e
         cd /var/www/wooddon.ru/data/www/test.wooddon.ru/backend
-        
-        # Активируем venv
         source venv/bin/activate
-        
-        # Обновляем зависимости из нового requirements.txt
         pip install -r requirements.txt -q
-        
-        # Миграции и статика
         python manage.py migrate --no-input
         python manage.py collectstatic --no-input --clear
-        
-        # ВАЖНО ДЛЯ FASTPANEL: Передаем права на все новые файлы владельцу сайта
         chown -R wooddon.ru:wooddon.ru /var/www/wooddon.ru/data/www/test.wooddon.ru/
-        
-        # Перезапуск сервисов (без sudo, так как GitLab зашел под root)
         systemctl restart gunicorn
         systemctl restart django-app.service
-        
         echo "Deploy done"
-ENDSSH
+      '
   only:
     - main
   environment:
