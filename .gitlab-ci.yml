@@ -52,6 +52,7 @@ deploy_test:
         systemctl restart django-app.service
         echo "Deploy done"
       '
+      
   only:
     - main
   environment:
