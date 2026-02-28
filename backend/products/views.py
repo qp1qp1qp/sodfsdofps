@@ -330,13 +330,6 @@ class FavoriteViewSet(viewsets.ViewSet):
             
             session_key = request.session.session_key
             
-            # Кэш на 30 секунд (короткий, т.к. часто меняется)
-            cache_key = f"favorites:{session_key}"
-            cached_favorites = cache.get(cache_key)
-            
-            if cached_favorites:
-                return Response(cached_favorites)
-            
             favorites = Favorite.objects.filter(
                 session_key=session_key
             ).select_related('product__product_type').prefetch_related(
@@ -345,9 +338,6 @@ class FavoriteViewSet(viewsets.ViewSet):
             
             from .serializers import FavoriteSerializer
             serializer = FavoriteSerializer(favorites, many=True)
-            
-            # Кэшируем
-            cache.set(cache_key, serializer.data, timeout=30)
             
             return Response(serializer.data)
             
@@ -363,10 +353,6 @@ class FavoriteViewSet(viewsets.ViewSet):
                 request.session.save()
             
             session_key = request.session.session_key
-            
-            # Инвалидируем кэш
-            cache_key = f"favorites:{session_key}"
-            cache.delete(cache_key)
             
             product = Product.objects.get(pk=pk)
             
