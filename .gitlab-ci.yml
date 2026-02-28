@@ -45,10 +45,10 @@ deploy_test:
         cd /var/www/wooddon.ru/data/www/test.wooddon.ru/backend
         source venv/bin/activate
         pip install -r requirements.txt -q
+        python manage.py migrate --fake-initial || true
         python manage.py migrate --no-input
         python manage.py collectstatic --no-input --clear
         chown -R wooddon.ru:wooddon.ru /var/www/wooddon.ru/data/www/test.wooddon.ru/
-        systemctl restart gunicorn
         systemctl restart django-app.service
         echo "Deploy done"
       '
