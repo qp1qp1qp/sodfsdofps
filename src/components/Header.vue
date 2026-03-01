@@ -209,6 +209,12 @@ onMounted(() => {
             <router-link to="/contacts" class="header__button">Контакты</router-link>
             <router-link to="/delivery" class="header__button">Доставка</router-link>
             <router-link to="/about" class="header__button">О компании</router-link>
+            <a href="/wooddon_pricelist.xlsx" download class="header__button flex items-center gap-1">
+              <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+              </svg>
+              Прайс-лист
+            </a>
           </div>
         </nav>
       </div>
@@ -294,6 +300,12 @@ onMounted(() => {
         <router-link to="/about" class="burger-menu__button" @click="closeMenu"
           >О компании</router-link
         >
+        <a href="/wooddon_pricelist.xlsx" download class="burger-menu__button flex items-center gap-2">
+          <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+          </svg>
+          Прайс-лист
+        </a>
       </nav>
       <hr class="burger-menu__divider" />
       <div class="burger-menu__icons">

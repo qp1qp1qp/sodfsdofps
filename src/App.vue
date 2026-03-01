@@ -7,6 +7,7 @@ import { getFavorites, addFavorite, removeFavorite } from './api'
 import StructuredData from './components/StructuredData.vue'
 import SkipToContent from './components/SkipToContent.vue'
 import FloatingBubbles from './components/FloatingBubbles.vue'
+import PhoneBubble from './components/PhoneBubble.vue'
 
 const router = useRouter()
 
@@ -275,6 +276,7 @@ provide('cart', {
       </div>
     </div>
   </template>
+  <PhoneBubble />
 </template>
 
 <style scoped>
