@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { createOrder } from '../api'
 import Footer from '../components/Footer.vue'
 import { useHead } from '@vueuse/head'
+import { vMaska } from "maska/vue"
 
 useHead({
   title: 'Оформление заказа | WoodDon',
@@ -60,8 +61,8 @@ const totalPrice = computed(() => {
 })
 
 const validatePhone = (value) => {
-  const phoneRegex = /^\+?[1-9]\d{1,14}$/
-  return phoneRegex.test(value)
+  const cleaned = value.replace(/[\s\-\(\)]/g, '')
+  return /^\+?[78]?\d{10}$/.test(cleaned)
 }
 
 const validateEmail = (value) => {
@@ -88,7 +89,7 @@ watch(email, (newValue) => {
 
 const isFormValid = computed(() => {
   return (
-    firstName.value &&
+    firstName.value.trim().length >= 2 &&
     validatePhone(phone.value) &&
     deliveryMethod.value &&
     (email.value === '' || validateEmail(email.value))
@@ -200,6 +201,9 @@ const getFullImageUrl = (imageUrl) => {
                     class="form-input w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     required
                   />
+                  <p v-if="firstName.length > 0 && firstName.trim().length < 2" class="mt-1 text-sm text-red-600">
+                    Имя должно содержать минимум 2 символа
+                  </p>
                 </div>
                 <div>
                   <label
@@ -225,8 +229,11 @@ const getFullImageUrl = (imageUrl) => {
                   >
                   <input
                     v-model="phone"
+                    v-maska
+                    data-maska="+7 (###) ###-##-##"
                     id="phone"
                     type="tel"
+                    placeholder="+7 (999) 999-99-99"
                     class="form-input w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     required
                   />
@@ -381,13 +388,21 @@ const getFullImageUrl = (imageUrl) => {
           <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">
             Спасибо за заказ, {{ firstName }}!
           </h2>
-          <p class="text-gray-600 dark:text-gray-300 mb-6">
-            Ваш заказ {{ orderNumber }} успешно оформлен. Мы отправим вам подтверждение на указанный
-            номер телефона.
-          </p>
-          <p class="text-sm text-gray-500 dark:text-gray-400">
-            Ожидайте звонка от нашего менеджера для подтверждения деталей заказа.
-          </p>
+          <p class="text-gray-600 dark:text-gray-300 mb-4">
+          Ваш заказ успешно принят! Наш менеджер свяжется с вами в ближайшее время для подтверждения деталей.
+        </p>
+        <p class="text-gray-600 dark:text-gray-300 mb-6">
+          Если у вас есть вопросы — вы можете позвонить нам сами:
+        </p>
+        <a
+          href="tel:+79885160320"
+          class="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-full font-semibold transition-colors"
+        >
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+          </svg>
+          +7 (988) 516-03-20
+        </a>
         </div>
       </div>
     </div>
