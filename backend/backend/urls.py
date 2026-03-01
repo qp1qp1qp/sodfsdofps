@@ -21,11 +21,11 @@ router.register(r'favorites', FavoriteViewSet, basename='favorite')
 
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('admin_new_wooddon_site_ru_test/', admin.site.urls),
     path('api/', include(router.urls)),
     path('api/newsletter/subscribe/', subscribe_newsletter, name='subscribe_newsletter'),
     path('api/analytics/events/', receive_analytics_events, name='receive_analytics_events'),
-    path('admin/api/characteristic-values/', get_characteristic_values, name='admin-characteristic-values'),
+    path('admin_new_wooddon_site_ru_test/api/characteristic-values/', get_characteristic_values, name='admin-characteristic-values'),
 ]
 
 if settings.DEBUG:

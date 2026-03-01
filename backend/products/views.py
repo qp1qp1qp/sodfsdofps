@@ -385,8 +385,6 @@ class FavoriteViewSet(viewsets.ViewSet):
             from .serializers import FavoriteSerializer
             serializer = FavoriteSerializer(favorites, many=True)
             
-            # Обновляем кэш
-            cache.set(cache_key, serializer.data, timeout=30)
             
             return Response(serializer.data)
             
