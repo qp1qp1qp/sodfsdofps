@@ -5,7 +5,7 @@ from django.conf.urls.static import static
 from django.views.static import serve as static_serve
 from django.views.decorators.cache import cache_control
 from rest_framework.routers import DefaultRouter
-from products.views import FavoriteViewSet, subscribe_newsletter, ProductViewSet, CharacteristicViewSet, HeroImageViewSet, GalleryImageViewSet, OrderViewSet, PageViewSet, ProductTypeViewSet, receive_analytics_events
+from products.views import submit_quiz, FavoriteViewSet, subscribe_newsletter, ProductViewSet, CharacteristicViewSet, HeroImageViewSet, GalleryImageViewSet, OrderViewSet, PageViewSet, ProductTypeViewSet, receive_analytics_events
 from products import views as product_views
 from products.admin_views import get_characteristic_values
 
@@ -25,6 +25,7 @@ urlpatterns = [
     path('api/', include(router.urls)),
     path('api/newsletter/subscribe/', subscribe_newsletter, name='subscribe_newsletter'),
     path('api/analytics/events/', receive_analytics_events, name='receive_analytics_events'),
+    path('api/quiz/submit/', submit_quiz, name='quiz_submit'),
     path('admin_new_wooddon_site_ru_test/api/characteristic-values/', get_characteristic_values, name='admin-characteristic-values'),
 ]
 

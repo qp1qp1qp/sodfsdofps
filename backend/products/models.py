@@ -542,3 +542,24 @@ def invalidate_product_cache(sender, **kwargs):
     except AttributeError:
         # LocMemCache не поддерживает паттерны — очищаем весь кэш
         cache.clear()
+
+
+class QuizLead(models.Model):
+    created_at    = models.DateTimeField(auto_now_add=True, db_index=True)
+    name          = models.CharField(max_length=150, verbose_name='Имя')
+    phone         = models.CharField(max_length=30,  verbose_name='Телефон')
+    structure     = models.CharField(max_length=100, blank=True, verbose_name='Тип строения')
+    material      = models.CharField(max_length=100, blank=True, verbose_name='Материал')
+    volume        = models.CharField(max_length=100, blank=True, verbose_name='Объём')
+    timing        = models.CharField(max_length=100, blank=True, verbose_name='Сроки')
+    recommended   = models.CharField(max_length=255, blank=True, verbose_name='Рекомендации')
+    is_processed  = models.BooleanField(default=False, verbose_name='Обработан')
+    manager_note  = models.TextField(blank=True, verbose_name='Заметка менеджера')
+
+    class Meta:
+        verbose_name        = 'Заявка с квиза'
+        verbose_name_plural = 'Заявки с квиза'
+        ordering            = ['-created_at']
+
+    def __str__(self):
+        return f"{self.name} | {self.phone} | {self.created_at:%d.%m.%Y %H:%M}"

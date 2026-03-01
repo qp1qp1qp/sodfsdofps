@@ -16,6 +16,7 @@ import Favorites from './pages/Favorites.vue'
 import ProductPage from './pages/ProductPage.vue'
 import Checkout from './pages/Checkout.vue'
 import Faq from './pages/Faq.vue'
+import Quiz from './pages/Quiz.vue'
 
 const app = createApp(App)
 const head = createHead()
@@ -31,7 +32,8 @@ const routes = [
   { path: '/all-products/:typeSlug', name: 'ProductsByType', component: AllProducts },
   { path: '/all-products/:typeSlug/:productSlug', name: 'ProductPage', component: ProductPage },
   { path: '/checkout', name: 'Checkout', component: Checkout },
-  { path: '/faq', name: 'Faq', component: Faq }
+  { path: '/faq', name: 'Faq', component: Faq },
+  { path: '/quiz', name: 'Quiz', component: Quiz }
 ]
 
 const router = createRouter({

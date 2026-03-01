@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Characteristic, NewsletterSubscriber, CharacteristicValue, Product, ProductCharacteristic, HeroImage, GalleryImage, Order, Page, Favorite, ProductType, ProductImage, UserActivityLog, ErrorLog
+from .models import QuizLead, Characteristic, NewsletterSubscriber, CharacteristicValue, Product, ProductCharacteristic, HeroImage, GalleryImage, Order, Page, Favorite, ProductType, ProductImage, UserActivityLog, ErrorLog
 from django import forms
 from django.utils.html import format_html
 from decimal import Decimal, InvalidOperation
@@ -443,3 +443,26 @@ class ErrorLogAdmin(admin.ModelAdmin):
         )
         self.message_user(request, f'{queryset.count()} ошибок отмечено как решенные')
     mark_as_resolved.short_description = 'Отметить как решенные'
+
+@admin.register(QuizLead)
+class QuizLeadAdmin(admin.ModelAdmin):
+    list_display  = ('created_at', 'name', 'phone', 'structure', 'material', 'volume', 'timing', 'recommended', 'is_processed')
+    list_filter   = ('is_processed', 'structure', 'material', 'timing')
+    search_fields = ('name', 'phone', 'structure', 'material')
+    readonly_fields = ('created_at', 'name', 'phone', 'structure', 'material', 'volume', 'timing', 'recommended')
+    list_editable = ('is_processed',)
+    ordering      = ('-created_at',)
+    date_hierarchy = 'created_at'
+
+    fieldsets = (
+        ('Контакт', {
+            'fields': ('created_at', 'name', 'phone')
+        }),
+        ('Ответы квиза', {
+            'fields': ('structure', 'material', 'volume', 'timing', 'recommended')
+        }),
+        ('Обработка', {
+            'fields': ('is_processed', 'manager_note')
+        }),
+    )
+    

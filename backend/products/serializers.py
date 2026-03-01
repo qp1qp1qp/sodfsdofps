@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Product, NewsletterSubscriber, Characteristic, HeroImage, GalleryImage, OrderItem, Order, Page, Favorite, ProductType, CharacteristicValue, ProductCharacteristic, ProductImage
+from .models import QuizLead, Product, NewsletterSubscriber, Characteristic, HeroImage, GalleryImage, OrderItem, Order, Page, Favorite, ProductType, CharacteristicValue, ProductCharacteristic, ProductImage
 from django.conf import settings
 from decimal import Decimal
 import json
@@ -277,3 +277,20 @@ class NewsletterSubscriberSerializer(serializers.ModelSerializer):
     class Meta:
         model = NewsletterSubscriber
         fields = ['email']
+
+
+class QuizLeadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model  = QuizLead
+        fields = ['name', 'phone', 'structure', 'material', 'volume', 'timing', 'recommended']
+
+    def validate_phone(self, value):
+        cleaned = value.replace(' ', '').replace('-', '').replace('(', '').replace(')', '')
+        if len(cleaned) < 7:
+            raise serializers.ValidationError('Введите корректный номер телефона')
+        return value
+
+    def validate_name(self, value):
+        if len(value.strip()) < 2:
+            raise serializers.ValidationError('Введите корректное имя')
+        return value.strip()

@@ -7,6 +7,7 @@ import Footer from '../components/Footer.vue'
 import Contact from '../components/Contact.vue'
 import MixedProductGallery from '../components/MixedProducts.vue'
 import { useHead } from '@vueuse/head'
+import HeroQuiz from '../components/HeroQuiz.vue'
 
 const { cart, addToCart, removeFromCart, updateFavorites, favorites } = inject('cart')
 
@@ -331,11 +332,12 @@ const galleryImages = ref([
         />
         <div class="hero-overlay"></div>
         <div class="hero-content">
-          <h2 class="hero-title">{{ hero.title }}</h2>
-          <p class="hero-subtitle">{{ hero.subtitle }}</p>
-          <router-link :to="hero.link" class="hero-button">
-            {{ hero.buttonText }}
-          </router-link>
+          <HeroQuiz v-if="index === 0" />
+          <template v-else>
+            <h2 class="hero-title">{{ hero.title }}</h2>
+            <p class="hero-subtitle">{{ hero.subtitle }}</p>
+            <router-link :to="hero.link" class="hero-button">{{ hero.buttonText }}</router-link>
+          </template>
         </div>
       </div>
       <div class="hero-nav">

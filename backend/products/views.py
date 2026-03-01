@@ -495,3 +495,18 @@ def get_characteristic_values(request):
     values = CharacteristicValue.objects.filter(characteristic_id=characteristic_id).values('id', 'value')
     return JsonResponse(list(values), safe=False)
 
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def submit_quiz(request):
+    """Принять заявку с квиза"""
+    from .models import QuizLead
+    from .serializers import QuizLeadSerializer
+
+    serializer = QuizLeadSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response({'status': 'ok'}, status=status.HTTP_201_CREATED)
+
+    logger.error(f"Quiz submit validation error: {serializer.errors}")
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
