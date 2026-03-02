@@ -1,5 +1,6 @@
 <script setup>
 import { reactive, watch, ref, onMounted, onUnmounted, inject } from 'vue'
+import { useRoute } from 'vue-router'
 import { getProducts, getFavorites, addFavorite, removeFavorite } from '../api'
 import debounce from 'lodash.debounce'
 import BestItemsSlider from '../components/BestItemsSlider.vue'
@@ -224,6 +225,11 @@ const startAutoSwitch = () => {
 const stopAutoSwitch = () => {
   clearInterval(autoSwitchInterval)
 }
+
+const route = useRoute()
+watch(() => route.path, (path) => {
+  if (path === '/') currentHeroIndex.value = 0
+})
 
 onMounted(() => {
   startAutoSwitch()

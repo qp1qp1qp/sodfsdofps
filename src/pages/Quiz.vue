@@ -14,29 +14,28 @@ useHead({
 })
 
 const router = useRouter()
-const route = useRoute()
+const route  = useRoute()
 const { isDarkMode } = inject('theme', { isDarkMode: ref(false) })
 
 // ─── Данные ──────────────────────────────────────────────────────────────────
-
 const allMaterials = [
-  { id: 'blockhouse', label: 'Блок-хаус',          icon: '🏠' },
-  { id: 'beam',       label: 'Брус',                icon: '🪜' },
-  { id: 'board',      label: 'Доска обрезная',      icon: '📋' },
-  { id: 'board_tu',   label: 'Доска обрезная ТУ',   icon: '📄' },
-  { id: 'lining',     label: 'Евровагонка',         icon: '🪵' },
-  { id: 'imitation',  label: 'Имитация бруса',      icon: '🏡' },
-  { id: 'floor',      label: 'Половая доска',       icon: '🪣' },
+  { id: 'blockhouse', label: 'Блок-хаус',         icon: '🏠' },
+  { id: 'beam',       label: 'Брус',               icon: '🪜' },
+  { id: 'board',      label: 'Доска обрезная',     icon: '📋' },
+  { id: 'board_tu',   label: 'Доска обрезная ТУ',  icon: '📄' },
+  { id: 'lining',     label: 'Евровагонка',        icon: '🪵' },
+  { id: 'imitation',  label: 'Имитация бруса',     icon: '🏡' },
+  { id: 'floor',      label: 'Половая доска',      icon: '🪣' },
+  { id: 'unknown',    label: 'Не знаю',            icon: '🤷' },
 ]
 
-// Рекомендации: первый ответ → приоритетные материалы
 const recommendations = {
-  bath:    ['lining', 'blockhouse', 'imitation'],  // влагостойкие отделочные
-  house:   ['blockhouse', 'imitation', 'beam'],    // фасад + каркас
-  fence:   ['board', 'board_tu'],                  // обрезная
-  terrace: ['floor', 'board', 'lining'],           // настил + обшивка
-  roof:    ['board', 'board_tu', 'beam'],          // стропила + обрешётка
-  floor:   ['floor', 'board_tu', 'lining'],        // настил пола
+  bath:    ['lining', 'blockhouse', 'imitation'],
+  house:   ['blockhouse', 'imitation', 'beam'],
+  fence:   ['board', 'board_tu'],
+  terrace: ['floor', 'board', 'lining'],
+  roof:    ['board', 'board_tu', 'beam'],
+  floor:   ['floor', 'board_tu', 'lining'],
 }
 
 const structureLabels = {
@@ -44,7 +43,8 @@ const structureLabels = {
   terrace: 'Терраса', roof: 'Крыша', floor: 'Пол'
 }
 const volumeLabels = {
-  small: 'До 1 м³', medium: '1–5 м³', large: '5–20 м³', xlarge: 'Более 20 м³'
+  small: 'До 1 м³', medium: '1–5 м³', large: '5–20 м³',
+  xlarge: 'Более 20 м³', unknown: 'Не знаю'
 }
 const timingLabels = {
   asap: 'Как можно скорее', week: 'В течение недели',
@@ -63,10 +63,11 @@ const steps = [
     emoji: '📐',
     text: 'Какой объём вам нужен?',
     options: [
-      { id: 'small',  label: 'До 1 м³',     sub: 'небольшой ремонт', icon: '🔨' },
-      { id: 'medium', label: '1–5 м³',       sub: 'строительство',   icon: '🏗️' },
-      { id: 'large',  label: '5–20 м³',      sub: 'большой объект',  icon: '🏢' },
-      { id: 'xlarge', label: 'Более 20 м³',  sub: 'оптовая партия',  icon: '🚛' },
+      { id: 'small',   label: 'До 1 м³',      sub: 'небольшой ремонт', icon: '🔨' },
+      { id: 'medium',  label: '1–5 м³',        sub: 'строительство',   icon: '🏗️' },
+      { id: 'large',   label: '5–20 м³',       sub: 'большой объект',  icon: '🏢' },
+      { id: 'xlarge',  label: 'Более 20 м³',   sub: 'оптовая партия',  icon: '🚛' },
+      { id: 'unknown', label: 'Не знаю',       sub: 'менеджер поможет',icon: '🤷' },
     ]
   },
   {
@@ -83,28 +84,35 @@ const steps = [
 ]
 
 // ─── Состояние ───────────────────────────────────────────────────────────────
-
 const answers   = ref({})
 const step      = ref(2)
 const done      = ref(false)
 const dir       = ref('forward')
 const name      = ref('')
 const phone     = ref('')
+const email     = ref('')
 const sending   = ref(false)
 const showModal = ref(false)
+
+// Ошибки валидации
+const phoneError = ref('')
+const emailError = ref('')
 
 onMounted(() => {
   const a = route.query.answer
   if (a) answers.value[1] = a
 })
 
-// ─── Computed ─────────────────────────────────────────────────────────────────
-
-// Опции для шага 2 — рекомендованные вверху со звёздочкой
+// ─── Computed ────────────────────────────────────────────────────────────────
 const materialOptions = computed(() => {
   const rec = recommendations[answers.value[1]] || []
-  return allMaterials.map(m => ({ ...m, recommended: rec.includes(m.id) }))
+  const sorted = allMaterials
+    .filter(m => m.id !== 'unknown')
+    .map(m => ({ ...m, recommended: rec.includes(m.id) }))
     .sort((a, b) => (b.recommended ? 1 : 0) - (a.recommended ? 1 : 0))
+  // «Не знаю» всегда последний
+  sorted.push({ id: 'unknown', label: 'Не знаю', icon: '🤷', recommended: false })
+  return sorted
 })
 
 const currentStep = computed(() => {
@@ -113,7 +121,6 @@ const currentStep = computed(() => {
   return s.id === 2 ? { ...s, options: materialOptions.value } : s
 })
 
-// Прогресс: шаги 1-4 + финал = 5 точек. Финал = 100%
 const progress = computed(() => done.value ? 100 : Math.round(((step.value - 1) / 4) * 100))
 
 const recHint = computed(() => {
@@ -131,12 +138,27 @@ const recommendedList = computed(() => {
   const sid = answers.value[1]
   const mid = answers.value[2]
   const base = recommendations[sid] || []
-  const all = mid ? [mid, ...base.filter(id => id !== mid)] : base
+  const all = mid && mid !== 'unknown' ? [mid, ...base.filter(id => id !== mid)] : base
   return [...new Set(all)].slice(0, 3).map(getMaterialLabel).join(', ')
 })
 
-// ─── Методы ───────────────────────────────────────────────────────────────────
+// Валидация — та же логика что в Checkout
+const validatePhone = (val) => {
+  const cleaned = val.replace(/[\s\-\(\)]/g, '')
+  return /^\+?[78]?\d{10}$/.test(cleaned)
+}
+const validateEmail = (val) => {
+  if (!val) return true
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)
+}
 
+const isFormValid = computed(() =>
+  name.value.trim().length >= 2 &&
+  validatePhone(phone.value) &&
+  validateEmail(email.value)
+)
+
+// ─── Методы ──────────────────────────────────────────────────────────────────
 const pick = (optionId) => {
   answers.value[step.value] = optionId
   dir.value = 'forward'
@@ -150,12 +172,17 @@ const back = () => {
 }
 
 const submit = async () => {
-  if (!name.value.trim() || !phone.value.trim() || sending.value) return
+  // Показываем ошибки перед отправкой
+  phoneError.value = validatePhone(phone.value) ? '' : 'Введите корректный номер телефона'
+  emailError.value = validateEmail(email.value)  ? '' : 'Введите корректный email'
+  if (!isFormValid.value || sending.value) return
+
   sending.value = true
   try {
     await api.post('/quiz/submit/', {
       name:        name.value.trim(),
       phone:       phone.value.trim(),
+      email:       email.value.trim(),
       structure:   structureLabels[answers.value[1]] || answers.value[1] || '',
       material:    getMaterialLabel(answers.value[2]),
       volume:      volumeLabels[answers.value[3]] || '',
@@ -176,16 +203,15 @@ const closeModal = () => { showModal.value = false; router.push('/') }
 <template>
   <div :class="['qp', { dark: isDarkMode }]">
 
-    <!-- SEO — видно роботам, не видно людям -->
+    <!-- SEO -->
     <div class="seo-only">
       <h1>Подбор пиломатериалов онлайн — WoodDon, Ростов-на-Дону</h1>
       <p>Ответьте на 4 вопроса и получите персональную рекомендацию: блок-хаус, брус, доска обрезная,
-         доска ТУ, евровагонка, имитация бруса или половая доска. Оптом и в розницу.</p>
+         доска ТУ, евровагонка, имитация бруса или половая доска.</p>
     </div>
 
     <div class="qp__inner">
-
-      <!-- Прогресс-бар -->
+      <!-- Прогресс -->
       <div class="qp__progress">
         <div class="qp__track">
           <div class="qp__fill" :style="{ width: progress + '%' }"></div>
@@ -195,7 +221,6 @@ const closeModal = () => { showModal.value = false; router.push('/') }
         </span>
       </div>
 
-      <!-- Анимированный контент -->
       <Transition :name="dir === 'forward' ? 'sf' : 'sb'" mode="out-in">
 
         <!-- Финальная форма -->
@@ -210,16 +235,43 @@ const closeModal = () => { showModal.value = false; router.push('/') }
             <span v-if="answers[4]" class="qp__tag">📅 {{ timingLabels[answers[4]] }}</span>
           </div>
 
-          <p class="qp__hint-text">
-            Оставьте имя и телефон — менеджер свяжется для уточнения деталей.
-          </p>
+          <p class="qp__hint-text">Оставьте контакты — менеджер свяжется для уточнения деталей.</p>
 
           <div class="qp__form">
-            <input v-model="name"  type="text" placeholder="Ваше имя *"          class="qp__input" />
-            <input v-model="phone" type="tel"  placeholder="+7 (999) 999-99-99 *" class="qp__input" />
+            <input
+              v-model="name"
+              type="text"
+              placeholder="Ваше имя *"
+              class="qp__input"
+            />
+
+            <div class="qp__field">
+              <input
+                v-model="phone"
+                type="tel"
+                placeholder="+7 (999) 999-99-99 *"
+                class="qp__input"
+                :class="{ 'qp__input--err': phoneError }"
+                @blur="phoneError = validatePhone(phone) ? '' : 'Введите корректный номер телефона'"
+              />
+              <p v-if="phoneError" class="qp__err">{{ phoneError }}</p>
+            </div>
+
+            <div class="qp__field">
+              <input
+                v-model="email"
+                type="email"
+                placeholder="Email (необязательно)"
+                class="qp__input"
+                :class="{ 'qp__input--err': emailError }"
+                @blur="emailError = validateEmail(email) ? '' : 'Введите корректный email'"
+              />
+              <p v-if="emailError" class="qp__err">{{ emailError }}</p>
+            </div>
+
             <button
               class="qp__submit"
-              :disabled="!name.trim() || !phone.trim() || sending"
+              :disabled="!isFormValid || sending"
               @click="submit"
             >
               <template v-if="sending">
@@ -231,6 +283,7 @@ const closeModal = () => { showModal.value = false; router.push('/') }
               </template>
               <template v-else>Получить расчёт →</template>
             </button>
+
             <p class="qp__privacy">Нажимая кнопку, вы соглашаетесь на обработку персональных данных</p>
           </div>
 
@@ -243,11 +296,16 @@ const closeModal = () => { showModal.value = false; router.push('/') }
           <h2 class="qp__title">{{ currentStep?.text }}</h2>
           <p v-if="recHint" class="qp__rec-hint">{{ recHint }}</p>
 
-          <div :class="['qp__grid', step === 2 && 'qp__grid--7']">
+          <div :class="['qp__grid', step === 2 && 'qp__grid--wide']">
             <button
               v-for="opt in currentStep?.options"
               :key="opt.id"
-              :class="['qp__opt', answers[step] === opt.id && 'qp__opt--sel', opt.recommended && 'qp__opt--rec']"
+              :class="[
+                'qp__opt',
+                answers[step] === opt.id && 'qp__opt--sel',
+                opt.recommended && 'qp__opt--rec',
+                opt.id === 'unknown' && 'qp__opt--unknown'
+              ]"
               @click="pick(opt.id)"
             >
               <span v-if="opt.recommended" class="qp__star">★</span>
@@ -263,7 +321,7 @@ const closeModal = () => { showModal.value = false; router.push('/') }
       </Transition>
     </div>
 
-    <!-- Модальное окно успеха — закрыть только кнопкой -->
+    <!-- Модалка успеха — закрыть только кнопкой -->
     <Transition name="modal">
       <div v-if="showModal" class="qp__overlay">
         <div class="qp__modal">
@@ -274,7 +332,7 @@ const closeModal = () => { showModal.value = false; router.push('/') }
           </svg>
           <h2 class="qp__modal-title">Заявка принята!</h2>
           <p class="qp__modal-text">Наш менеджер свяжется с вами для подтверждения деталей.</p>
-          <p class="qp__modal-text">Если удобнее — позвоните сами:</p>
+          <p class="qp__modal-text">Если хотите — позвоните сами:</p>
           <a href="tel:+79885160320" class="qp__modal-call">📞 +7 (988) 516-03-20</a>
           <button class="qp__modal-btn" @click="closeModal">На главную</button>
         </div>
@@ -286,11 +344,9 @@ const closeModal = () => { showModal.value = false; router.push('/') }
 </template>
 
 <style scoped>
-/* ── Layout ────────────────────────────────── */
 .qp {
   min-height: 100vh; display: flex; flex-direction: column;
   background: linear-gradient(135deg,#f0fdf4 0%,#dcfce7 50%,#f0fdf4 100%);
-  transition: background .3s;
 }
 .qp.dark { background: linear-gradient(135deg,#0f1a0f 0%,#111f11 50%,#0f1a0f 100%); }
 
@@ -304,12 +360,9 @@ const closeModal = () => { showModal.value = false; router.push('/') }
   align-items: center; padding: 100px 16px 48px; gap: 20px;
 }
 
-/* ── Progress ──────────────────────────────── */
+/* Progress */
 .qp__progress { width: 100%; max-width: 580px; display: flex; flex-direction: column; gap: 6px; }
-.qp__track {
-  height: 7px; border-radius: 99px; overflow: hidden;
-  background: #d1fae5;
-}
+.qp__track { height: 7px; border-radius: 99px; overflow: hidden; background: #d1fae5; }
 .dark .qp__track { background: #14290f; }
 .qp__fill {
   height: 100%; border-radius: 99px;
@@ -319,7 +372,7 @@ const closeModal = () => { showModal.value = false; router.push('/') }
 .qp__prog-label { font-size: .8rem; color: #6b7280; align-self: flex-end; }
 .dark .qp__prog-label { color: #9ca3af; }
 
-/* ── Card ──────────────────────────────────── */
+/* Card */
 .qp__card {
   width: 100%; max-width: 580px;
   background: #fff; border-radius: 24px; padding: 36px 32px;
@@ -335,21 +388,18 @@ const closeModal = () => { showModal.value = false; router.push('/') }
 }
 .dark .qp__title { color: #f9fafb; }
 
-/* Подсказка рекомендаций */
 .qp__rec-hint {
-  font-size: .82rem; color: #16a34a;
-  background: #dcfce7; border-radius: 8px;
-  padding: 6px 14px; margin: 0; text-align: center;
+  font-size: .82rem; color: #16a34a; background: #dcfce7;
+  border-radius: 8px; padding: 6px 14px; margin: 0; text-align: center;
 }
 .dark .qp__rec-hint { background: #14532d; color: #86efac; }
 
 .qp__hint-text { text-align: center; color: #6b7280; font-size: .95rem; line-height: 1.6; margin: 0; }
 .dark .qp__hint-text { color: #9ca3af; }
 
-/* ── Options grid ──────────────────────────── */
+/* Options */
 .qp__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
-/* 7 материалов — 3 колонки */
-.qp__grid--7 { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+.qp__grid--wide { grid-template-columns: repeat(auto-fill, minmax(128px,1fr)); }
 
 .qp__opt {
   position: relative; display: flex; flex-direction: column;
@@ -359,17 +409,18 @@ const closeModal = () => { showModal.value = false; router.push('/') }
   transition: all .2s ease;
 }
 .dark .qp__opt { background: #374151; border-color: #4b5563; }
-
 .qp__opt:hover {
   border-color: #22c55e; background: #f0fdf4;
   transform: translateY(-2px); box-shadow: 0 4px 12px rgba(34,197,94,.15);
 }
 .dark .qp__opt:hover { background: #1c3a20; border-color: #22c55e; }
-
 .qp__opt--sel  { border-color: #16a34a !important; background: #dcfce7 !important; }
 .dark .qp__opt--sel  { background: #14532d !important; }
 .qp__opt--rec  { border-color: #86efac; }
 .dark .qp__opt--rec  { border-color: #166534; }
+/* «Не знаю» — чуть приглушённый */
+.qp__opt--unknown { opacity: .75; }
+.qp__opt--unknown:hover { opacity: 1; }
 
 .qp__star { position: absolute; top: 6px; right: 8px; font-size: .65rem; color: #16a34a; font-weight: 700; }
 .qp__opt-icon  { font-size: 1.8rem; }
@@ -377,7 +428,7 @@ const closeModal = () => { showModal.value = false; router.push('/') }
 .dark .qp__opt-label { color: #e5e7eb; }
 .qp__opt-sub   { font-size: .7rem; color: #9ca3af; }
 
-/* ── Result tags ───────────────────────────── */
+/* Tags */
 .qp__tags  { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
 .qp__tag {
   background: #dcfce7; color: #15803d;
@@ -385,8 +436,9 @@ const closeModal = () => { showModal.value = false; router.push('/') }
 }
 .dark .qp__tag { background: #14532d; color: #86efac; }
 
-/* ── Contact form ──────────────────────────── */
+/* Form */
 .qp__form { width: 100%; display: flex; flex-direction: column; gap: 10px; }
+.qp__field { width: 100%; display: flex; flex-direction: column; gap: 4px; }
 
 .qp__input {
   width: 100%; padding: 12px 16px;
@@ -397,14 +449,17 @@ const closeModal = () => { showModal.value = false; router.push('/') }
 .dark .qp__input { background: #374151; border-color: #4b5563; color: #f9fafb; }
 .qp__input:focus { border-color: #22c55e; }
 .qp__input::placeholder { color: #9ca3af; }
+.qp__input--err { border-color: #ef4444 !important; }
+
+.qp__err { font-size: .78rem; color: #ef4444; margin: 0; }
 
 .qp__submit {
   width: 100%; padding: 14px;
   background: linear-gradient(135deg,#22c55e,#16a34a);
   color: #fff; border: none; border-radius: 12px;
   font-size: 1rem; font-weight: 700; cursor: pointer;
-  transition: opacity .2s, transform .2s;
   display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: opacity .2s, transform .2s;
 }
 .qp__submit:hover:not(:disabled) { opacity: .9; transform: translateY(-1px); }
 .qp__submit:disabled { opacity: .45; cursor: not-allowed; }
@@ -414,7 +469,6 @@ const closeModal = () => { showModal.value = false; router.push('/') }
 
 .qp__privacy { text-align: center; font-size: .72rem; color: #9ca3af; margin: 0; }
 
-/* ── Back btn ──────────────────────────────── */
 .qp__back {
   background: none; border: none; color: #9ca3af;
   font-size: .85rem; cursor: pointer; padding: 4px 8px;
@@ -422,10 +476,9 @@ const closeModal = () => { showModal.value = false; router.push('/') }
 }
 .qp__back:hover { color: #6b7280; }
 
-/* ── Modal overlay ─────────────────────────── */
+/* Modal */
 .qp__overlay {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,.55);
+  position: fixed; inset: 0; background: rgba(0,0,0,.55);
   display: flex; align-items: center; justify-content: center;
   z-index: 9999; padding: 16px;
 }
@@ -461,7 +514,7 @@ const closeModal = () => { showModal.value = false; router.push('/') }
 .qp__modal-btn:hover { background: #e5e7eb; }
 .dark .qp__modal-btn:hover { background: #4b5563; }
 
-/* ── Transitions ───────────────────────────── */
+/* Transitions */
 .sf-enter-active,.sf-leave-active,.sb-enter-active,.sb-leave-active { transition: all .3s ease; }
 .sf-enter-from { opacity: 0; transform: translateX(40px); }
 .sf-leave-to   { opacity: 0; transform: translateX(-40px); }
@@ -470,14 +523,12 @@ const closeModal = () => { showModal.value = false; router.push('/') }
 
 .modal-enter-active,.modal-leave-active { transition: all .25s ease; }
 .modal-enter-from,.modal-leave-to { opacity: 0; }
-.modal-enter-from .qp__modal,.modal-leave-to .qp__modal { transform: scale(.92) translateY(10px); }
 
-/* ── Responsive ────────────────────────────── */
 @media (max-width: 480px) {
   .qp__card { padding: 24px 16px; }
   .qp__title { font-size: 1.2rem; }
   .qp__grid { gap: 8px; }
-  .qp__grid--7 { grid-template-columns: repeat(auto-fill,minmax(100px,1fr)); }
+  .qp__grid--wide { grid-template-columns: repeat(auto-fill,minmax(100px,1fr)); }
   .qp__opt { padding: 12px 8px; }
   .qp__opt-icon { font-size: 1.4rem; }
   .qp__opt-label { font-size: .75rem; }
