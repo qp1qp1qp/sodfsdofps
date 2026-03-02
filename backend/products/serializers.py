@@ -2,6 +2,9 @@ from rest_framework import serializers
 from .models import QuizLead, Product, NewsletterSubscriber, Characteristic, HeroImage, GalleryImage, OrderItem, Order, Page, Favorite, ProductType, CharacteristicValue, ProductCharacteristic, ProductImage
 from django.conf import settings
 from decimal import Decimal
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError as DjangoValidationError
+
 import json
 import logging
 
@@ -282,7 +285,7 @@ class NewsletterSubscriberSerializer(serializers.ModelSerializer):
 class QuizLeadSerializer(serializers.ModelSerializer):
     class Meta:
         model  = QuizLead
-        fields = ['name', 'phone', 'structure', 'material', 'volume', 'timing', 'recommended']
+        fields = ['name', 'phone', 'email', 'structure', 'material', 'volume', 'timing', 'recommended']
 
     def validate_phone(self, value):
         cleaned = value.replace(' ', '').replace('-', '').replace('(', '').replace(')', '')
@@ -294,3 +297,15 @@ class QuizLeadSerializer(serializers.ModelSerializer):
         if len(value.strip()) < 2:
             raise serializers.ValidationError('Введите корректное имя')
         return value.strip()
+
+    def validate_email(self, value):
+        if not value:
+            return value
+        email = value.strip().lower()
+
+        try:
+            validate_email(email)
+        except DjangoValidationError:
+            raise serializers.ValidationError('Введите корректный email адрес')
+
+        return email

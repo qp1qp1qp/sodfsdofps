@@ -548,6 +548,7 @@ class QuizLead(models.Model):
     created_at    = models.DateTimeField(auto_now_add=True, db_index=True)
     name          = models.CharField(max_length=150, verbose_name='Имя')
     phone         = models.CharField(max_length=30,  verbose_name='Телефон')
+    email        = models.EmailField(blank=True,     verbose_name='Email')
     structure     = models.CharField(max_length=100, blank=True, verbose_name='Тип строения')
     material      = models.CharField(max_length=100, blank=True, verbose_name='Материал')
     volume        = models.CharField(max_length=100, blank=True, verbose_name='Объём')

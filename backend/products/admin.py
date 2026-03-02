@@ -446,17 +446,17 @@ class ErrorLogAdmin(admin.ModelAdmin):
 
 @admin.register(QuizLead)
 class QuizLeadAdmin(admin.ModelAdmin):
-    list_display  = ('created_at', 'name', 'phone', 'structure', 'material', 'volume', 'timing', 'recommended', 'is_processed')
+    list_display  = ('created_at', 'name', 'phone', 'email', 'structure', 'material', 'volume', 'timing', 'recommended', 'is_processed')
     list_filter   = ('is_processed', 'structure', 'material', 'timing')
     search_fields = ('name', 'phone', 'structure', 'material')
-    readonly_fields = ('created_at', 'name', 'phone', 'structure', 'material', 'volume', 'timing', 'recommended')
+    readonly_fields = ('created_at', 'name', 'phone', 'email', 'structure', 'material', 'volume', 'timing', 'recommended')
     list_editable = ('is_processed',)
     ordering      = ('-created_at',)
     date_hierarchy = 'created_at'
 
     fieldsets = (
         ('Контакт', {
-            'fields': ('created_at', 'name', 'phone')
+            'fields': ('created_at', 'name', 'phone', 'email')
         }),
         ('Ответы квиза', {
             'fields': ('structure', 'material', 'volume', 'timing', 'recommended')
@@ -465,4 +465,3 @@ class QuizLeadAdmin(admin.ModelAdmin):
             'fields': ('is_processed', 'manager_note')
         }),
     )
-    

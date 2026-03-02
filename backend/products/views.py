@@ -22,6 +22,8 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.core.cache import cache
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
+from .utils import send_order_notification 
+
 
 
 logger = logging.getLogger('products')
@@ -314,6 +316,11 @@ class OrderViewSet(viewsets.ModelViewSet):
             return Order.objects.all()
         return Order.objects.none()
 
+    def perform_create(self, serializer):
+        order = serializer.save()
+        send_order_notification(order)
+
+
 class PageViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Page.objects.all()
     serializer_class = PageSerializer
@@ -496,16 +503,18 @@ def get_characteristic_values(request):
     return JsonResponse(list(values), safe=False)
 
 
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def submit_quiz(request):
-    """Принять заявку с квиза"""
     from .models import QuizLead
     from .serializers import QuizLeadSerializer
+    from .utils import send_quiz_notification  # или from .email_utils import ...
 
     serializer = QuizLeadSerializer(data=request.data)
     if serializer.is_valid():
-        serializer.save()
+        lead = serializer.save()
+        send_quiz_notification(lead)
         return Response({'status': 'ok'}, status=status.HTTP_201_CREATED)
 
     logger.error(f"Quiz submit validation error: {serializer.errors}")

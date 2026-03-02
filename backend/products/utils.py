@@ -6,6 +6,7 @@ import traceback
 from .models import UserActivityLog, ErrorLog
 from django.utils import timezone
 from django.conf import settings
+from django.core.mail import send_mail
 
 logger = logging.getLogger(__name__)
 
@@ -148,3 +149,94 @@ def log_error(request, level, message, traceback_text=None, extra_data=None):
         )
     except Exception as e:
         logger.error(f"Error logging error: {e}", exc_info=True)
+
+
+def send_order_notification(order):
+    """Отправить уведомление о новом заказе на почту менеджера"""
+    try:
+        items_text = ''
+        
+        # Запрашиваем связанные товары из базы данных
+        order_items = order.order_items.all()
+        
+        if order_items.exists():
+            for item in order_items:
+                # Обращаемся к полям через точку, так как это объекты модели
+                title = getattr(item, 'title', '—')
+                quantity = getattr(item, 'quantity', 1)
+                price = getattr(item, 'price', 0)
+                items_text += f"  • {title} × {quantity} шт. — {price} ₽\n"
+
+        message = f"""
+Новый заказ на сайте WoodDon!
+═══════════════════════════════
+
+📦 Номер заказа: {order.order_number or '—'}
+👤 Клиент:     {order.first_name} {order.last_name or ''}
+📞 Телефон:    {order.phone}
+📧 Email:      {order.email or '—'}
+🏢 Тип:        {'Юр. лицо' if order.customer_type == 'legal' else 'Физ. лицо'}
+
+📋 Состав заказа:
+{items_text or '  (данные о товарах загружаются...)'}
+
+🚚 Доставка:   {order.delivery_method or '—'}
+💬 Комментарий: {order.comment or '—'}
+
+💰 Итого:      {order.total_price} ₽
+
+───────────────────────────────
+Посмотреть в админке: https://test.wooddon.ru/admin_new_wooddon_site_ru_test/products/order/{order.id}/
+        """.strip()
+
+        from django.core.mail import send_mail
+        from django.conf import settings
+        
+        send_mail(
+            subject=f'🛒 Новый заказ {order.order_number or f"#{order.id}"} — WoodDon',
+            message=message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[settings.NOTIFICATION_EMAIL],
+            fail_silently=False,  # Оставим False для тестирования, чтобы сразу видеть ошибки
+        )
+        print(">>> ПИСЬМО О ЗАКАЗЕ УСПЕШНО ОТПРАВЛЕНО!")
+        
+    except Exception as e:
+        import logging
+        logging.getLogger('products').error(f'Order email notification error: {e}')
+        print(f">>> ОШИБКА ОТПРАВКИ ПИСЬМА: {e}")
+
+
+def send_quiz_notification(lead):
+    """Отправить уведомление о новой заявке с квиза"""
+    try:
+        message = f"""
+Новая заявка с квиза на WoodDon!
+═══════════════════════════════
+
+👤 Имя:        {lead.name}
+📞 Телефон:    {lead.phone}
+📧 Email:      {lead.email or '—'}
+
+🔍 Ответы квиза:
+  • Строение:   {lead.structure or '—'}
+  • Материал:   {lead.material or '—'}
+  • Объём:      {lead.volume or '—'}
+  • Сроки:      {lead.timing or '—'}
+
+💡 Рекомендовано: {lead.recommended or '—'}
+
+───────────────────────────────
+Посмотреть в админке: https://test.wooddon.ru/admin_new_wooddon_site_ru_test/products/quizlead/{lead.id}/
+        """.strip()
+
+        send_mail(
+            subject=f'📋 Новая заявка с квиза — {lead.name}',
+            message=message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[settings.NOTIFICATION_EMAIL],
+            fail_silently=True,
+        )
+    except Exception as e:
+        import logging
+        logging.getLogger('products').error(f'Quiz email notification error: {e}')
