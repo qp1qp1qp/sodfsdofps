@@ -40,14 +40,14 @@ const heroItems = [
   {
     title: 'Скидки до 50%',
     subtitle: 'Успейте приобрести товары по выгодным ценам',
-    image: '/pictures/hero1.jpg',
+    image: '/pictures/hero1.webp',
     link: '/lumber',
     buttonText: 'Смотреть предложения'
   },
   {
     title: 'Новые поступления',
     subtitle: 'Откройте для себя наши последние новинки',
-    image: '/pictures/hero2.jpg',
+    image: '/pictures/hero2.webp',
     link: '/new-products',
     buttonText: 'Узнать больше'
   }
@@ -303,11 +303,11 @@ watch(
 )
 
 const galleryImages = ref([
-  '/pictures/mnogo_dosok.jpg',
-  '/pictures/nov_doski.jpg',
-  '/pictures/sklad.jpg',
-  '/pictures/eshe_doski.jpg',
-  '/pictures/doski.jpg'
+  '/pictures/mnogo_dosok.webp',
+  '/pictures/nov_doski.webp',
+  '/pictures/sklad.webp',
+  '/pictures/eshe_doski.webp',
+  '/pictures/doski.webp'
 ])
 </script>
 
