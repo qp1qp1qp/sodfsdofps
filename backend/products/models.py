@@ -307,6 +307,24 @@ class Product(models.Model):
         elif self.primary_unit == 'linear':
             return 'п.м'
         return 'шт.'
+    
+    @property
+    def estimated_volume_per_unit(self):
+        """
+        Оценочный объём 1 штуки в м³ для любого типа товара.
+        Используется для расчёта «влезет ли в Газель».
+        - piece/cubic: берём volume_per_unit напрямую (L×W×T)
+        - square: area_per_unit × thickness (если есть)
+        - linear: linear_meters_per_unit × width × thickness (если есть)
+        """
+        from decimal import Decimal
+        if self.volume_per_unit:
+            return float(self.volume_per_unit)
+        if self.area_per_unit and self.thickness:
+            return float(self.area_per_unit * self.thickness)
+        if self.linear_meters_per_unit and self.width and self.thickness:
+            return float(self.linear_meters_per_unit * self.width * self.thickness)
+        return 0.0
 
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, related_name='images', on_delete=models.CASCADE)

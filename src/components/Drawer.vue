@@ -4,47 +4,45 @@ import { useRouter } from 'vue-router'
 import DrawerHead from './DrawerHead.vue'
 import CartItemList from './CartItemList.vue'
 import InfoBlock from './infoBlock.vue'
+import TruckIndicator from './TruckIndicator.vue'
 
 const props = defineProps({
-  totalPrice: {
-    type: Number,
-    required: true
-  }
+  totalPrice: { type: Number, required: true }
 })
 
 const router = useRouter()
-
 const { cart, closeDrawer } = inject('cart')
 
 const orderId = ref(null)
 const buttonDisabled = ref(false)
-const drawerContentRef = ref(null)
 
-const updateQuantity = (item, change) => {
-  const index = cart.value.findIndex((cartItem) => cartItem.id === item.id)
-  if (index !== -1) {
-    cart.value[index].quantity += change
-    if (cart.value[index].quantity <= 0) {
-      cart.value.splice(index, 1)
-    }
-  }
-}
+// ─── Рекомендованный метод доставки (приходит от TruckIndicator) ─────────────
+const suggestedDelivery = ref(null)
+
+// ─── Суммарный объём корзины в м³ ────────────────────────────────────────────
+// volume_per_unit — м³/шт, уже рассчитывается бэкендом для ВСЕХ типов товаров
+// (piece → length×width×thickness, square → через estimated_volume_per_unit,
+//  linear → через estimated_volume_per_unit)
+const totalVolume = computed(() =>
+  cart.value.reduce((sum, item) => {
+    const vol = Number(item.volume_per_unit) || 0
+    const qty = Number(item.quantity) || 0
+    return sum + vol * qty
+  }, 0)
+)
+
+const totalPriceFormatted = computed(() =>
+  new Intl.NumberFormat('ru-RU').format(props.totalPrice)
+)
 
 const handleCreateOrder = () => {
   closeDrawer()
-  router.push('/checkout')
+  router.push({
+    path: '/checkout',
+    // Передаём рекомендацию как state (не в URL)
+    state: { suggestedDelivery: suggestedDelivery.value }
+  })
 }
-
-watch(
-  cart,
-  () => {
-    if (drawerContentRef.value) {
-      drawerContentRef.value.style.height = 'auto'
-      drawerContentRef.value.style.height = `${drawerContentRef.value.scrollHeight}px`
-    }
-  },
-  { deep: true }
-)
 </script>
 
 <template>
@@ -52,10 +50,14 @@ watch(
     class="drawer-overlay fixed top-0 left-0 h-full w-full bg-black z-50 opacity-70"
     @click="closeDrawer"
   ></div>
+
   <div class="bg-white dark:bg-gray-800 w-full sm:w-96 h-full fixed right-0 top-0 z-50 flex flex-col">
-    <div ref="drawerContentRef" class="p-4 sm:p-8 flex-grow overflow-y-auto transition-all duration-300">
+
+    <!-- ── Верхняя часть: скролится ──────────────────────────────────────── -->
+    <div class="flex-1 overflow-y-auto p-4 sm:p-6">
       <DrawerHead />
 
+      <!-- Пустая корзина / успех -->
       <div v-if="!cart.length || orderId" class="flex h-full items-center justify-center">
         <InfoBlock
           v-if="!cart.length && !orderId"
@@ -71,30 +73,50 @@ watch(
         />
       </div>
 
-      <div v-else>
-        <CartItemList :cart="cart" @update-quantity="updateQuantity" />
-      </div>
+      <!-- Список товаров -->
+      <CartItemList v-else :cart="cart" />
     </div>
 
-    <div v-if="cart.length && !orderId" class="p-4 sm:p-8 border-t dark:border-gray-700">
-      <div class="flex flex-col gap-4">
-        <div class="flex gap-2 text-sm sm:text-base">
-          <span class="dark:text-gray-300">Общая стоимость:</span>
-          <div class="flex-1 border-b border-dashed dark:border-gray-600"></div>
-          <b class="dark:text-white">{{ totalPrice }} Rub</b>
-        </div>
+    <!-- ── Нижняя панель: фиксированная ─────────────────────────────────── -->
+    <div
+      v-if="cart.length && !orderId"
+      class="border-t dark:border-gray-700 p-4 sm:p-5 flex flex-col gap-3 bg-white dark:bg-gray-800"
+    >
+      <!-- Индикатор машины -->
+      <TruckIndicator
+        :total-volume="totalVolume"
+        @suggest-delivery="val => suggestedDelivery = val"
+      />
 
-        <button
-          :disabled="buttonDisabled"
-          @click="handleCreateOrder"
-          class="mt-4 bg-lime-500 transition w-full rounded-xl py-3 hover:bg-lime-600 cursor-pointer active:bg-lime-700 disabled:bg-slate-400 dark:bg-lime-600 dark:hover:bg-lime-700 dark:active:bg-lime-800 dark:disabled:bg-slate-600"
-        >
-          Оформить заказ
-        </button>
+      <!-- Итоговая цена -->
+      <div class="flex gap-2 text-sm">
+        <span class="text-gray-600 dark:text-gray-300">Итого:</span>
+        <div class="flex-1 border-b border-dashed border-gray-300 dark:border-gray-600"></div>
+        <b class="dark:text-white">{{ totalPriceFormatted }} ₽</b>
       </div>
+
+      <!-- Кнопка -->
+      <button
+        :disabled="buttonDisabled"
+        @click="handleCreateOrder"
+        class="w-full rounded-xl py-3 font-semibold text-white bg-lime-500 hover:bg-lime-600 active:bg-lime-700 disabled:bg-slate-400 dark:bg-lime-600 dark:hover:bg-lime-700 transition"
+      >
+        Оформить заказ
+      </button>
+
+      <!-- Дисклеймер -->
+      <p class="text-center text-xs text-gray-400 dark:text-gray-500 leading-snug">
+        Цены носят информационный характер и&nbsp;не являются публичной офертой
+        (ст.&nbsp;437 ГК РФ). Актуальная стоимость уточняется у&nbsp;менеджера.
+      </p>
     </div>
+
   </div>
 </template>
 
 <style scoped>
+/* Плавный скролл списка товаров */
+.flex-1.overflow-y-auto::-webkit-scrollbar { width: 4px; }
+.flex-1.overflow-y-auto::-webkit-scrollbar-track { background: transparent; }
+.flex-1.overflow-y-auto::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 99px; }
 </style>

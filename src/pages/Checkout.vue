@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, inject, watch } from 'vue'
+import { ref, computed, inject, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { createOrder } from '../api'
 import Footer from '../components/Footer.vue'
@@ -11,8 +11,7 @@ useHead({
   meta: [
     {
       name: 'description',
-      content:
-        'Оформление заказа на пиломатериалы и стройматериалы в компании WoodDon. Удобный процесс покупки и доставки.'
+      content: 'Оформление заказа на пиломатериалы и стройматериалы в компании WoodDon. Удобный процесс покупки и доставки.'
     },
     {
       name: 'keywords',
@@ -25,34 +24,42 @@ const router = useRouter()
 const { cart, clearCart } = inject('cart', { value: [], clearCart: () => {} })
 const { isDarkMode } = inject('theme', { isDarkMode: ref(false) })
 
-const customerType = ref('individual')
-const firstName = ref('')
-const lastName = ref('')
-const phone = ref('')
-const email = ref('')
-const comment = ref('')
+// ─── Поля формы ──────────────────────────────────────────────────────────────
+const customerType  = ref('individual')
+const firstName     = ref('')
+const lastName      = ref('')
+const phone         = ref('')
+const email         = ref('')
+const comment       = ref('')
 const deliveryMethod = ref('')
 
 const phoneError = ref('')
 const emailError = ref('')
 
+// ─── Методы доставки ─────────────────────────────────────────────────────────
 const deliveryMethods = [
-  { id: 1, name: 'Самовывоз', price: 0 },
-  { id: 2, name: 'Доставка по Ростову-на-Дону 1.5т от 3000 руб', price: 3000 },
-  { id: 3, name: 'Доставка по Ростову-на-Дону 6т от 8000 руб', price: 8000 },
+  { id: 1, name: 'Самовывоз',                                     price: 0     },
+  { id: 2, name: 'Доставка по Ростову-на-Дону 1.5т от 3000 руб', price: 3000  },
+  { id: 3, name: 'Доставка по Ростову-на-Дону 6т от 8000 руб',   price: 8000  },
   { id: 4, name: 'Доставка по Ростову-на-Дону 10т от 10000 руб', price: 10000 }
 ]
 
-const orderNumber = ref('')
+// ─── Рекомендация из Drawer (передаётся через history.state) ─────────────────
+const suggestedDelivery = ref(window.history.state?.suggestedDelivery || null)
 
-const generateOrderNumber = () => {
-  return Math.floor(10000000 + Math.random() * 90000000).toString()
-}
+onMounted(() => {
+  // Предвыбираем метод только если пользователь ещё ничего не выбрал
+  if (suggestedDelivery.value && !deliveryMethod.value) {
+    const match = deliveryMethods.find(m => m.name === suggestedDelivery.value)
+    if (match) deliveryMethod.value = match.name
+  }
+})
 
+// ─── Расчёты ─────────────────────────────────────────────────────────────────
 const deliveryPrice = computed(() => {
   if (!deliveryMethod.value) return 0
-  const selectedMethod = deliveryMethods.find((method) => method.name === deliveryMethod.value)
-  return selectedMethod ? selectedMethod.price : 0
+  const method = deliveryMethods.find(m => m.name === deliveryMethod.value)
+  return method ? method.price : 0
 })
 
 const totalPrice = computed(() => {
@@ -60,74 +67,71 @@ const totalPrice = computed(() => {
   return itemsTotal + deliveryPrice.value
 })
 
+// ─── Валидация ────────────────────────────────────────────────────────────────
 const validatePhone = (value) => {
   const cleaned = value.replace(/[\s\-\(\)]/g, '')
   return /^\+?[78]?\d{10}$/.test(cleaned)
 }
 
 const validateEmail = (value) => {
-  if (!value) return true // Email is optional
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  return emailRegex.test(value)
+  if (!value) return true
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
 }
 
-watch(phone, (newValue) => {
-  if (!validatePhone(newValue)) {
-    phoneError.value = 'Пожалуйста, введите корректный номер телефона'
-  } else {
-    phoneError.value = ''
-  }
+watch(phone, (val) => {
+  phoneError.value = validatePhone(val) ? '' : 'Пожалуйста, введите корректный номер телефона'
 })
 
-watch(email, (newValue) => {
-  if (newValue && !validateEmail(newValue)) {
-    emailError.value = 'Пожалуйста, введите корректный email или оставьте поле пустым'
-  } else {
-    emailError.value = ''
-  }
+watch(email, (val) => {
+  emailError.value = (val && !validateEmail(val))
+    ? 'Пожалуйста, введите корректный email или оставьте поле пустым'
+    : ''
 })
 
-const isFormValid = computed(() => {
-  return (
-    firstName.value.trim().length >= 2 &&
-    validatePhone(phone.value) &&
-    deliveryMethod.value &&
-    (email.value === '' || validateEmail(email.value))
-  )
-})
+const isFormValid = computed(() =>
+  firstName.value.trim().length >= 2 &&
+  validatePhone(phone.value) &&
+  deliveryMethod.value &&
+  (email.value === '' || validateEmail(email.value))
+)
 
-const showPopup = ref(false)
+// ─── Отправка заказа ─────────────────────────────────────────────────────────
+const showPopup    = ref(false)
 const isSubmitting = ref(false)
+const orderNumber  = ref('')
+
+const generateOrderNumber = () =>
+  Math.floor(10000000 + Math.random() * 90000000).toString()
 
 const handleCreateOrder = async () => {
   if (!isFormValid.value || isSubmitting.value) return
   isSubmitting.value = true
 
   const orderData = {
-    customer_type: customerType.value,
-    first_name: firstName.value,
-    last_name: lastName.value,
-    phone: phone.value,
-    email: email.value,
-    comment: comment.value,
+    customer_type:   customerType.value,
+    first_name:      firstName.value,
+    last_name:       lastName.value,
+    phone:           phone.value,
+    email:           email.value,
+    comment:         comment.value,
     delivery_method: deliveryMethod.value,
-    items: cart.value.map((item) => ({
+    items: cart.value.map(item => ({
       product_id: item.id,
-      title: item.title,
-      quantity: item.quantity,
-      price: item.price,
-      imageUrl: item.imageUrl
+      title:      item.title,
+      quantity:   item.quantity,
+      price:      item.price,
+      imageUrl:   item.imageUrl
     })),
     total_price: totalPrice.value
   }
 
   try {
     const response = await createOrder(orderData)
-    console.log('Заказ успешно создан:', response.data)
+    console.log('Заказ создан:', response.data)
     clearCart()
     showPopup.value = true
   } catch (error) {
-    console.error('Ошибка при оформлении заказа:', error.response?.data || error.message)
+    console.error('Ошибка заказа:', error.response?.data || error.message)
   } finally {
     isSubmitting.value = false
   }
@@ -140,10 +144,8 @@ const closePopup = () => {
 
 const getFullImageUrl = (imageUrl) => {
   if (!imageUrl) return ''
-  if (imageUrl.startsWith('http')) {
-    return imageUrl
-  }
-  const baseUrl = (import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '');
+  if (imageUrl.startsWith('http')) return imageUrl
+  const baseUrl = (import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '')
   return `${baseUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`
 }
 </script>
@@ -270,22 +272,55 @@ const getFullImageUrl = (imageUrl) => {
               </div>
 
               <div>
-                <h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100">
+                <h3 class="text-xl font-semibold mb-3 text-gray-800 dark:text-gray-100">
                   Способ доставки *
                 </h3>
+
+                <!-- Зелёный бокс с рекомендацией -->
+                <div
+                  v-if="suggestedDelivery"
+                  class="mb-3 flex items-start gap-2 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-xl px-4 py-3"
+                >
+                  <svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  <div>
+                    <p class="text-sm font-semibold text-green-700 dark:text-green-400">
+                      Рекомендуем для вашего объёма:
+                    </p>
+                    <p class="text-sm text-green-600 dark:text-green-300">
+                      {{ suggestedDelivery }}
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Радио-кнопки методов доставки -->
                 <div class="space-y-2">
-                  <div v-for="method in deliveryMethods" :key="method.id" class="flex items-center">
+                  <label
+                    v-for="method in deliveryMethods"
+                    :key="method.id"
+                    class="flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors"
+                    :class="deliveryMethod === method.name
+                      ? 'bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700'
+                      : 'hover:bg-gray-50 dark:hover:bg-gray-700/40'"
+                  >
                     <input
                       type="radio"
                       v-model="deliveryMethod"
-                      :id="method.id"
                       :value="method.name"
-                      class="form-radio text-indigo-600"
+                      class="form-radio text-indigo-600 flex-shrink-0"
                     />
-                    <label :for="method.id" class="ml-2 text-gray-700 dark:text-gray-300">{{
-                      method.name
-                    }}</label>
-                  </div>
+                    <span class="text-gray-700 dark:text-gray-300 text-sm leading-snug">
+                      {{ method.name }}
+                    </span>
+                    <!-- Метка «Рекомендуем» рядом с нужным методом -->
+                    <span
+                      v-if="method.name === suggestedDelivery"
+                      class="ml-auto text-xs font-semibold bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-2 py-0.5 rounded-full"
+                    >
+                      ✓ Рекомендуем
+                    </span>
+                  </label>
                 </div>
               </div>
             </div>

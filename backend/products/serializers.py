@@ -87,7 +87,9 @@ class ProductSerializer(serializers.ModelSerializer):
     price_per_cubic_meter = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     price_per_square_meter = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     price_per_linear_meter = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    volume_per_unit = serializers.DecimalField(max_digits=10, decimal_places=4, read_only=True, allow_null=True)
     images = ProductImageSerializer(many=True, read_only=True)
+    estimated_volume = serializers.SerializerMethodField()
     
     # Добавляем поля для единиц измерения
     primary_unit = serializers.CharField(read_only=True)
@@ -100,8 +102,12 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'description', 'quantity', 'is_available', 'imageUrl',
                  'characteristics', 'is_favorite', 'is_featured', 'product_type', 'custom_url',
                  'price_per_unit', 'price_per_cubic_meter', 'price_per_square_meter', 'price_per_linear_meter',
-                 'primary_unit', 'unit_value', 'unit_label', 'dimension_values', 'price', 'images']
-        
+                 'primary_unit', 'unit_value', 'unit_label', 'dimension_values', 'price', 'images', 'volume_per_unit',
+                 'estimated_volume', 'linear_meters_per_unit', 'area_per_unit']
+    
+    def get_estimated_volume(self, obj):
+        return obj.estimated_volume_per_unit
+    
     def get_imageUrl(self, obj):
         if obj.imageUrl:
             return f"{settings.MEDIA_URL}{obj.imageUrl}"

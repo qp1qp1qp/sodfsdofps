@@ -9,6 +9,7 @@ const props = defineProps({
   title: String,
   imageUrl: String,
   price_per_unit: Number,
+  volume_per_unit: { type: Number, default: 0 },
   price_per_cubic_meter: Number,
   price_per_square_meter: Number,
   price_per_linear_meter: Number,
@@ -93,6 +94,7 @@ const addToCart = (e) => {
     id: props.id,
     title: props.title,
     imageUrl: props.imageUrl,
+    volume_per_unit: props.volume_per_unit,
     price_per_unit: props.price_per_unit, // Original price per unit
     price_per_cubic_meter: props.price_per_cubic_meter,
     price_per_linear_meter: props.price_per_linear_meter,

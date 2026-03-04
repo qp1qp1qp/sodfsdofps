@@ -94,11 +94,12 @@ const removeFromCart = (item) => {
 }
 
 const updateCartItemQuantity = (itemId, newQuantity) => {
-  const item = cart.value.find((cartItem) => cartItem.id === itemId)
-  if (item) {
-    item.quantity = newQuantity
-    item.price = item.price_per_unit
-  }
+  // Создаём новый массив — гарантирует реактивное обновление computed во всех дочерних компонентах
+  cart.value = cart.value.map(item =>
+    item.id === itemId
+      ? { ...item, quantity: newQuantity, price: item.price_per_unit }
+      : item
+  )
 }
 
 watch(
