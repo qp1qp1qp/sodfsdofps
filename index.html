@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Preload LCP hero image -->
+  <link rel="preload" as="image" href="/pictures/hero1.webp" fetchpriority="high" />
+
+  <!-- Primary Meta Tags -->
+  <title>WoodDon — пиломатериалы в Ростове-на-Дону</title>
+  <meta name="title" content="WoodDon — пиломатериалы в Ростове-на-Дону" />
+  <meta name="description"
+    content="Продажа пиломатериалов в Ростове-на-Дону: доски, брус, вагонка, ламинат. Доставка по городу и области. Низкие цены, высокое качество — WoodDon." />
+  <meta name="keywords"
+    content="пиломатериалы Ростов-на-Дону, купить доску, брус, вагонка, строительные материалы, WoodDon" />
+  <meta name="robots" content="index, follow" />
+  <meta name="author" content="WoodDon" />
+
+  <!-- Canonical -->
+  <link rel="canonical" href="https://www.wooddon.ru/" />
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://www.wooddon.ru/" />
+  <meta property="og:title" content="WoodDon — пиломатериалы в Ростове-на-Дону" />
+  <meta property="og:description"
+    content="Продажа пиломатериалов в Ростове-на-Дону: доски, брус, вагонка, ламинат. Доставка по городу и области." />
+  <meta property="og:image" content="https://www.wooddon.ru/og-image.jpg" />
+  <meta property="og:locale" content="ru_RU" />
+  <meta property="og:site_name" content="WoodDon" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:url" content="https://www.wooddon.ru/" />
+  <meta name="twitter:title" content="WoodDon — пиломатериалы в Ростове-на-Дону" />
+  <meta name="twitter:description" content="Продажа пиломатериалов в Ростове-на-Дону: доски, брус, вагонка, ламинат." />
+  <meta name="twitter:image" content="https://www.wooddon.ru/og-image.jpg" />
+
+  <!-- Icons -->
+  <link rel="icon" href="/logo_short.svg" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <meta name="theme-color" content="#4a7c59" />
+
+
+  <script>
+    if ('%VITE_ENABLE_ANALYTICS%' === 'true') {
+      // ── Yandex.Metrika ──
+      (function (m, e, t, r, i, k, a) {
+        m[i] = m[i] || function () { (m[i].a = m[i].a || []).push(arguments) };
+        m[i].l = 1 * new Date();
+        for (var j = 0; j < document.scripts.length; j++) { if (document.scripts[j].src === r) { return; } }
+        k = e.createElement(t), a = e.getElementsByTagName(t)[0], k.async = 1, k.src = r, a.parentNode.insertBefore(k, a)
+      })(window, document, 'script', 'https://mc.yandex.ru/metrika/tag.js', 'ym');
+      ym(90119455, 'init', { clickmap: true, trackLinks: true, accurateTrackBounce: true, webvisor: true, ecommerce: "dataLayer" });
+
+      // ── Google Analytics (gtag.js) ──
+      var gs = document.createElement('script');
+      gs.async = true;
+      gs.src = 'https://www.googletagmanager.com/gtag/js?id=G-6S00RZYXYD';
+      document.head.appendChild(gs);
+      window.dataLayer = window.dataLayer || [];
+      function gtag() { dataLayer.push(arguments); }
+      gtag('js', new Date());
+      gtag('config', 'G-6S00RZYXYD');
+    }
+  </script>
+</head>
+
+<body>
+  <!-- Yandex.Metrika noscript (только для прода, но безвреден локально) -->
+  <noscript>
+    <div><img src="https://mc.yandex.ru/watch/90119455" style="position:absolute;left:-9999px;" alt="" /></div>
+  </noscript>
+
+  <div id="app"></div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+
+</html>
